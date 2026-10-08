@@ -70,9 +70,15 @@ em.hl { font-style: normal; color: var(--blue); }
 .progress span { display: block; height: 100%; background: var(--blue); transform-origin: 0 50%; transform: scaleX(var(--sp, 0)); }
 .header-row { display: flex; align-items: center; gap: 1.25rem; height: 72px; transition: height 0.35s var(--ease); }
 .is-scrolled .header-row { height: 60px; }
-.brand { font: 800 1.2rem/1 var(--sans); letter-spacing: -0.04em; color: var(--ink); text-decoration: none; display: inline-flex; align-items: center; flex: none; }
-.brand::before { content: ""; width: 9px; height: 9px; margin-right: 0.6rem; border-radius: 50%; background: var(--blue); box-shadow: 0 0 0 4px var(--tint); }
-.brand:hover { color: var(--ink); }
+.brand { font: 800 1.2rem/1 var(--sans); letter-spacing: -0.04em; color: var(--ink); text-decoration: none; display: inline-flex; align-items: center; gap: 0.6rem; flex: none;
+  margin-left: -0.45rem; padding: 0.4rem 0.75rem 0.4rem 0.45rem; border-radius: 14px; cursor: pointer; transition: background 0.25s var(--ease), box-shadow 0.25s var(--ease); }
+.brand:hover { color: var(--ink); background: var(--tint); }
+.brand:active { background: var(--tint-2); }
+.brand-mark { width: 32px; height: 32px; flex: none; transition: transform 0.35s var(--ease); }
+.brand-mark rect { fill: var(--blue); }
+.brand-mark path { fill: none; stroke: #fff; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.brand:hover .brand-mark { transform: rotate(-6deg) scale(1.06); }
+.brand-word { display: inline-flex; }
 .brand-4 { color: var(--blue); }
 .nav { position: relative; display: none; margin-left: auto; }
 .nav ul { list-style: none; margin: 0; padding: 0; display: flex; gap: 0.15rem; }

@@ -142,7 +142,7 @@ def page(key, title, desc, body, assets, form=False, index=True, closing_cta=Tru
 <a class="skip" href="#main">Skip to content</a>
 <header class="site-header" data-header>
   <div class="wrap header-row">
-    <a class="brand" href="{BASE}/" aria-label="{SITE} home">obscur<span class="brand-4">4</span></a>
+    <a class="brand" href="{BASE}/" title="Back to the homepage" aria-label="obscur4, back to the homepage"{" aria-current=\"page\"" if key == "home" else ""}><svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9"/><path d="M19 7.5 L9.5 19.5 H23 M19 7.5 V25"/></svg><span class="brand-word">obscur<span class="brand-4">4</span></span></a>
     <nav class="nav" aria-label="Main" data-nav><ul>{nav}</ul><span class="nav-ind" aria-hidden="true"></span></nav>
     <a class="btn btn-primary btn-sm header-cta" href="{to('contact')}">{esc(CHROME['nav_button'])}</a>
     <details class="msheet" data-sheet>
@@ -171,7 +171,7 @@ def footer():
   <div class="wrap">
     <div class="footer-grid">
       <div class="footer-about">
-        <a class="brand" href="{BASE}/">obscur<span class="brand-4">4</span></a>
+        <a class="brand" href="{BASE}/" title="Back to the homepage" aria-label="obscur4, back to the homepage"><svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9"/><path d="M19 7.5 L9.5 19.5 H23 M19 7.5 V25"/></svg><span class="brand-word">obscur<span class="brand-4">4</span></span></a>
         <p>{esc(CHROME['tagline'])}</p>
       </div>
       <div><h2>{esc(CHROME['footer_services'])}</h2><ul>

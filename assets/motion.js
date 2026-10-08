@@ -59,11 +59,11 @@
 
   var SCENES = {
     // Drawings: lines draw and shapes pop, in mechanical steps, once, when the figure enters the viewport.
-    art: { mode: "once", dur: 2600, render: function (root, p) { drawParts(root, Math.floor(p * 36) / 36); } },
+    art: { mode: "once", dur: 2200, render: function (root, p) { drawParts(root, p); } },
     // Continuous flows (dots along connectors).
     flow: { mode: "loop", render: function (root, ms) { flowDots(root, ms); } },
     // Hero kicker: a dotted leader runs out in steps.
-    kicker: { mode: "once", dur: 900, render: function (root, p) { set(root.querySelector(".dots"), "--k", Math.floor(p * 14) / 14); } },
+    kicker: { mode: "once", dur: 1100, render: function (root, p) { set(root.querySelector(".dots"), "--k", easeIO(p)); } },
 
     // Home hero: a message moves through an organization; some people report it (blue).
     net: { mode: "loop", init: function (root) {
@@ -248,9 +248,9 @@
         if (sc.init) sc.init(root);
         var fixed = seekFor(name);
         if (fixed !== null) { sc.render(root, sc.mode === "loop" ? fixed * 1000 : fixed); return; }
-        if (sc.mode === "steps") { scroll.push({ root: root, sc: sc, last: -99 }); return; }
+        if (sc.mode === "steps") { scroll.push({ root: root, sc: sc, last: -99, cur: null }); return; }
         if (reduce) return;
-        if (sc.mode === "scroll") scroll.push({ root: root, sc: sc, last: -99 });
+        if (sc.mode === "scroll") scroll.push({ root: root, sc: sc, last: -99, cur: null });
         else if (sc.mode === "loop") loops.push({ root: root, sc: sc, on: false, t0: 0, acc: 0 });
         else {
           sc.render(root, 0);
@@ -276,22 +276,30 @@
       requestAnimationFrame(frame);
     })(performance.now());
 
-    var queued = false;
-    function update() {
-      queued = false;
-      scroll.forEach(function (s) {
-        var v;
-        if (s.sc.mode === "steps") {
-          var st = stepsRaw(s.root);
-          v = s.sc.map(st.raw, st.n, st.before);
-          if (reduce) v = Math.max(0, Math.round(v));
-          v = Math.max(0, v);
-        } else v = progressOf(s.root);
-        if (Math.abs(v - s.last) > 0.0005) { s.sc.render(s.root, v); s.last = v; }
-      });
+    // Scroll-driven scenes follow the scroll position with exponential smoothing, so wheel notches and
+    // trackpad flicks become one continuous movement (time constant TAU ms).
+    var TAU = 140, running = false, lastT = 0;
+    function target(s) {
+      if (s.sc.mode === "steps") {
+        var st = stepsRaw(s.root), v = Math.max(0, s.sc.map(st.raw, st.n, st.before));
+        return reduce ? Math.round(v) : v;
+      }
+      return progressOf(s.root);
     }
-    function onScroll() { if (!queued) { queued = true; requestAnimationFrame(update); } }
-    update();
+    function frame(now) {
+      var dt = lastT ? Math.min(64, now - lastT) : 16, a = 1 - Math.exp(-dt / TAU), busy = false;
+      lastT = now;
+      scroll.forEach(function (s) {
+        var t = target(s);
+        if (s.cur === null || reduce) s.cur = t;
+        else s.cur += (t - s.cur) * a;
+        if (Math.abs(t - s.cur) < 0.0004) s.cur = t; else busy = true;
+        if (Math.abs(s.cur - s.last) > 0.0002) { s.sc.render(s.root, s.cur); s.last = s.cur; }
+      });
+      if (busy) requestAnimationFrame(frame); else { running = false; lastT = 0; }
+    }
+    function onScroll() { if (!running) { running = true; requestAnimationFrame(frame); } }
+    onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", function () { scroll.forEach(function (s) { s.last = -99; }); onScroll(); });
   }
@@ -304,7 +312,7 @@
         var art = panel.querySelector('[data-scene~="art"]');
         if (!art || reduce) return;
         var t0 = performance.now();
-        (function tick(now) { var q = clamp((now - t0) / 1800); drawParts(art, Math.floor(q * 36) / 36); if (q < 1) requestAnimationFrame(tick); })(t0);
+        (function tick(now) { var q = clamp((now - t0) / 1600); drawParts(art, q); if (q < 1) requestAnimationFrame(tick); })(t0);
       }
       function restart() {
         if (reduce || paused) return;
