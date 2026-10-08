@@ -34,8 +34,9 @@ ROUTES = {
     "platform": "/platform/", "partners": "/partners/", "about": "/about/", "contact": "/contact/",
     "privacy": "/privacy/", "sent": "/contact/sent/",
 }
-NAV = [("awareness", "Awareness & phishing"), ("mobile", "Mobile assessment"), ("how", "How we work"),
-       ("platform", "Platform"), ("partners", "Partners"), ("about", "About")]
+SOLUTIONS = [("awareness", "Awareness & phishing", "Managed, localized campaigns and training", "inbox"),
+             ("mobile", "Mobile assessment", "Evidence-grade testing of protected app builds", "phone")]
+NAV = [("how", "How we work"), ("platform", "Platform"), ("partners", "Partners"), ("about", "About")]
 
 
 # ------------------------------------------------------------------ text helpers
@@ -101,10 +102,20 @@ def emit_assets():
 def page(key, title, desc, body, assets, form=False, index=True, closing_cta=True):
     path = ROUTES.get(key, "/")
     robots = "" if (INDEXABLE and index) else '<meta name="robots" content="noindex">'
-    nav = "".join(f'<li><a href="{to(k)}"{" aria-current=\"page\"" if k == key else ""}>{html.escape(lbl)}</a></li>'
-                  for k, lbl in NAV)
-    sheet = "".join(f'<li><a href="{to(k)}"{" aria-current=\"page\"" if k == key else ""}>{html.escape(lbl)}</a></li>'
-                    for k, lbl in [("home", "Home")] + NAV + [("contact", "Contact")])
+    import illustrations as _I
+    cur = lambda k: ' aria-current="page"' if k == key else ""
+    in_sol = key in [k for k, *_ in SOLUTIONS]
+    items = "".join(f'<li><a class="dd-item" href="{to(k)}"{cur(k)}><span class="dd-ico">{_I.icon(ic, 0, 0.01)}</span>'
+                    f'<span><strong>{html.escape(t)}</strong><span class="dd-sub">{html.escape(sub)}</span></span></a></li>'
+                    for k, t, sub, ic in SOLUTIONS)
+    nav = (f'<li class="has-menu" data-menu><button class="nav-trigger" type="button" aria-expanded="false" aria-controls="menu-solutions"'
+           f'{" data-current" if in_sol else ""}>Solutions<svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 L6 7.5 L9 4.5"/></svg></button>'
+           f'<div class="dropdown" id="menu-solutions"><ul>{items}</ul></div></li>')
+    nav += "".join(f'<li><a href="{to(k)}"{cur(k)}{" data-current" if k == key else ""}>{html.escape(lbl)}</a></li>' for k, lbl in NAV)
+    sol_sheet = "".join(f'<li><a href="{to(k)}"{cur(k)}>{html.escape(t)}</a></li>' for k, t, *_ in SOLUTIONS)
+    sheet = (f'<li><a href="{to("home")}"{cur("home")}>Home</a></li>'
+             f'<li class="sheet-group"><p class="label">Solutions</p><ul>{sol_sheet}</ul></li>'
+             + "".join(f'<li><a href="{to(k)}"{cur(k)}>{html.escape(lbl)}</a></li>' for k, lbl in NAV + [("contact", "Contact")]))
     ld = ""
     if key == "home":
         ld = '<script type="application/ld+json">' + json.dumps(
@@ -174,7 +185,7 @@ def footer():
         <a class="brand" href="{BASE}/" title="Back to the homepage" aria-label="obscur4, back to the homepage"><svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9"/><path d="M19 7.5 L9.5 19.5 H23 M19 7.5 V25"/></svg><span class="brand-word">obscur<span class="brand-4">4</span></span></a>
         <p>{esc(CHROME['tagline'])}</p>
       </div>
-      <div><h2>{esc(CHROME['footer_services'])}</h2><ul>
+      <div><h2>Solutions</h2><ul>
         <li><a href="{to('awareness')}">Awareness &amp; phishing</a></li>
         <li><a href="{to('mobile')}">Mobile assessment</a></li></ul></div>
       <div><h2>{esc(CHROME['footer_company'])}</h2><ul>

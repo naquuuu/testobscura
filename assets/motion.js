@@ -363,14 +363,14 @@
     window.addEventListener("scroll", function () { if (!q) { q = true; requestAnimationFrame(function () { q = false; frame(); }); } }, { passive: true });
     frame();
     if (nav && ind) {
-      var current = nav.querySelector('a[aria-current="page"]');
+      var current = nav.querySelector("[data-current]");
       var place = function (a) {
         if (!a) { set(ind, "--o", 0); return; }
         set(ind, "--x", (a.offsetLeft + 11) + "px"); set(ind, "--w", (a.offsetWidth - 22) + "px"); set(ind, "--o", 1);
       };
       place(current);
       requestAnimationFrame(function () { requestAnimationFrame(function () { nav.classList.add("nav-ready"); }); });
-      all(nav, "a").forEach(function (a) { a.addEventListener("mouseenter", function () { place(a); }); a.addEventListener("focus", function () { place(a); }); });
+      all(nav, ":scope > ul > li > a, .nav-trigger").forEach(function (a) { a.addEventListener("mouseenter", function () { place(a); }); a.addEventListener("focus", function () { place(a); }); });
       nav.addEventListener("mouseleave", function () { place(current); });
       window.addEventListener("resize", function () { place(current); });
     }
@@ -381,10 +381,29 @@
     }
   }
 
+  // Solutions dropdown: click or hover to open, Esc / outside click to close, arrow keys move through items.
+  function initMenus() {
+    all(d, "[data-menu]").forEach(function (li) {
+      var btn = li.querySelector(".nav-trigger"), links = all(li, ".dd-item"), closeT = null;
+      function open(v) { li.classList.toggle("is-open", v); btn.setAttribute("aria-expanded", v ? "true" : "false"); }
+      btn.addEventListener("click", function () { open(!li.classList.contains("is-open")); });
+      li.addEventListener("mouseenter", function () { clearTimeout(closeT); open(true); });
+      li.addEventListener("mouseleave", function () { closeT = setTimeout(function () { open(false); }, 180); });
+      li.addEventListener("keydown", function (e) {
+        var i = links.indexOf(d.activeElement);
+        if (e.key === "Escape") { open(false); btn.focus(); }
+        if (e.key === "ArrowDown") { e.preventDefault(); open(true); (links[i + 1] || links[0]).focus(); }
+        if (e.key === "ArrowUp") { e.preventDefault(); (links[i - 1] || links[links.length - 1]).focus(); }
+      });
+      li.addEventListener("focusout", function (e) { if (!li.contains(e.relatedTarget)) open(false); });
+      d.addEventListener("click", function (e) { if (!li.contains(e.target)) open(false); });
+    });
+  }
+
   function boot() {
     var y = +new URLSearchParams(location.search).get("y");  // verification only: ?y=1200 scrolls before scenes start
     if (y) window.scrollTo(0, y);
-    initChrome(); initTabs(); initScenes();
+    initChrome(); initMenus(); initTabs(); initScenes();
   }
   if (d.readyState === "loading") d.addEventListener("DOMContentLoaded", boot); else boot();
   window.__seek = function (name, v) { all(d, '[data-scene~="' + name + '"]').forEach(function (r) { SCENES[name].render(r, v); }); };
