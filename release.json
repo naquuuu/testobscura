@@ -1,0 +1,8 @@
+{
+  "contact_email": "hello@obscur4.online",
+  "legal_signed_off": false,
+  "claims_attested": [],
+  "security_txt_expires": "2027-10-08T00:00:00Z",
+  "_help": "python build.py makes the production site with noindex. When counsel has signed off the privacy notice and consent text and every claim C1-C12 in WEBSITE-SPEC section 9 is attested true, set legal_signed_off, list the claims, set indexable to true and run: python build.py --release",
+  "indexable": false
+}
