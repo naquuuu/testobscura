@@ -1,11 +1,11 @@
-"""Static site generator for obscur4.online, in Bahasa Indonesia (default, at /) and English (under /en/).
+"""Static site generator for obscur4.online (English-only, DECISIONS D12).
 
     python build.py            # production build -> public/ (noindex until release.json "indexable" is true)
     python build.py --release  # same, but also enforces the release gates and makes the site indexable
 
 Standard library only. Output is plain static HTML for Cloudflare Pages (see README.md).
-Copy lives in content.py and content_platform.py as (Bahasa Indonesia, English) tuples; every page is built in both.
-This reverses D12 (English-only): the Indonesian copy needs the native-speaker review gate before release.
+Copy lives in content.py and content_platform.py as (Bahasa Indonesia, English) tuples. The build uses the English side
+at the root; set BUILD_LANGS = (0, 1) to also build Bahasa Indonesia (default at /, English under /en/).
 """
 import hashlib
 import html
@@ -32,8 +32,11 @@ ORIGIN = f"https://{DOMAIN}"
 PROBLEMS = []
 
 LANGS = ("id", "en")
-L = [0]  # language being built: 0 = Bahasa Indonesia (default, at /), 1 = English (under /en/)
-ROUTES = dict(SLUGS)  # key -> (Indonesian path, English path)
+BUILD_LANGS = (1,)  # English only (D12). (0, 1) builds Bahasa Indonesia at / and English under /en/.
+BILINGUAL = len(BUILD_LANGS) > 1
+L = [BUILD_LANGS[0]]  # language being built: 0 = Bahasa Indonesia, 1 = English
+# key -> (Indonesian path, English path). English-only: English pages sit at the root, without the /en prefix.
+ROUTES = {k: (i, e if BILINGUAL else (e[3:] or "/")) for k, (i, e) in SLUGS.items()}
 SOLUTIONS = CHROME["solutions"]
 NAV = CHROME["nav"]
 
@@ -105,6 +108,8 @@ def alt_href(key):
 
 
 def lang_switch(cls="lang-switch", long=False):
+    if not BILINGUAL:
+        return ""
     other = 1 - L[0]
     text = CHROME["lang_switch"] if long else CHROME["lang_switch_short"]
     return (f'<a class="{cls}" href="{alt_href(PAGE_KEY[0])}" hreflang="{LANGS[other]}" lang="{LANGS[other]}" '
@@ -139,7 +144,7 @@ def page(key, title, desc, body, assets, form=False, index=True, closing_cta=Tru
             {"@context": "https://schema.org", "@type": "Organization", "name": SITE, "url": ORIGIN + "/",
              "email": CONTACT_EMAIL}) + "</script>"
     alternates = ""
-    if key in ROUTES and index:
+    if BILINGUAL and key in ROUTES and index:
         alternates = "".join(f'<link rel="alternate" hreflang="{LANGS[i]}" href="{ORIGIN}{ROUTES[key][i]}">' for i in (0, 1))
         alternates += f'<link rel="alternate" hreflang="x-default" href="{ORIGIN}{ROUTES[key][0]}">'
     form_js = f'<script src="{assets["site.js"]}" defer></script>' if form else ""
@@ -222,7 +227,7 @@ def footer(brand, home_title, home_aria):
       <div><h2>{esc(CHROME['footer_contact'])}</h2><ul>
         <li><a href="{to('contact')}">{esc(CHROME['nav_button'])}</a></li>{mail}</ul></div>
     </div>
-    <div class="footer-base"><span>&copy; {SITE}</span><span>{lang_switch("footer-lang", long=True)} &middot; <a href="{to('privacy')}">{esc(CHROME['footer_privacy'])}</a> &middot; <a href="#main">{esc(CHROME['to_top'])}</a></span></div>
+    <div class="footer-base"><span>&copy; {SITE}</span><span>{lang_switch("footer-lang", long=True) + " &middot; " if BILINGUAL else ""}<a href="{to('privacy')}">{esc(CHROME['footer_privacy'])}</a> &middot; <a href="#main">{esc(CHROME['to_top'])}</a></span></div>
   </div>
 </footer>"""
 
@@ -598,7 +603,7 @@ def contact():
     topics = "".join(f'<label class="pill pill-ico"><input type="radio" name="topic" value="{v}" required><span>{I.icon(topic_icons[v], 0, 0.01)}{esc(t)}</span></label>'
                      for v, t in p["topics"])
     reply = "".join(f'<label class="pill"><input type="radio" name="reply_language" value="{v}"{" checked" if v == LANGS[L[0]] else ""}><span>{html.escape(t)}</span></label>'
-                    for v, t in (("id", "Bahasa Indonesia"), ("en", "English")))
+                    for v, t in ((("id", "Bahasa Indonesia"), ("en", "English")) if L[0] == 0 else (("en", "English"), ("id", "Bahasa Indonesia"))))
     form = f"""<form class="request-form" id="request-form" action="{BASE}/api/request" method="post"
   data-err-required="{esc(p['err_required'])}" data-err-email="{esc(p['err_email'])}" data-err-consent="{esc(p['err_consent'])}"
   data-err-format="{esc(p['err_format'])}" data-err-message-len="{esc(p['err_message_len'])}" data-err-phone="{esc(p['err_phone'])}">
@@ -696,20 +701,19 @@ def write(rel, doc):
 
 
 def extras(assets):
-    L[0] = 0
     blocks = ""
-    for i in (0, 1):
+    for i in BUILD_LANGS:
         L[0] = i
         blocks += (f'<div lang="{LANGS[i]}"><p class="label">{esc(UI["nf_label"])}</p><h1>{html.escape(E(NOT_FOUND["title"]))}</h1>'
                    f'<p class="muted">{esc(UI["nf_body"])}</p>'
                    f'{btns([(CHROME["home"], to("home")), (CHROME["nav_button"], to("contact"))])}</div>')
-    L[0] = 0
+    L[0] = BUILD_LANGS[0]
     nf = f"""<section class="sent"><div class="wrap sent-grid"><div>{I.lost()}</div><div class="nf-langs">{blocks}</div></div></section>"""
     doc = page("404", UI["nf_title"], NOT_FOUND["title"], nf, assets, index=False, closing_cta=False)
     gate("404.html", doc)
     (OUT / "404.html").write_text(doc, encoding="utf-8")
 
-    urls = "".join(f"<url><loc>{ORIGIN}{r}</loc></url>" for k, pair in ROUTES.items() if k != "sent" for r in pair)
+    urls = "".join(f"<url><loc>{ORIGIN}{ROUTES[k][i]}</loc></url>" for k in ROUTES if k != "sent" for i in BUILD_LANGS)
     (OUT / "sitemap.xml").write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
                                      + urls + "</urlset>\n", encoding="utf-8")
     (OUT / "robots.txt").write_text(f"User-agent: *\nAllow: /\nSitemap: {ORIGIN}/sitemap.xml\n" if INDEXABLE
@@ -731,11 +735,14 @@ def extras(assets):
         headers.append("  X-Robots-Tag: noindex")
     headers += ["", "/assets/*", "  Cache-Control: public, max-age=31536000, immutable", ""]
     (OUT / "_headers").write_text("\n".join(headers), encoding="utf-8")
-    # The English-only preview served English pages at the root; send those URLs to their /en/ counterparts.
-    old_en = {"awareness": "/awareness-phishing/", "mobile": "/mobile-assessment/", "how": "/how-we-work/",
-              "partners": "/partners/", "about": "/about/", "contact": "/contact/", "privacy": "/privacy/",
-              "sent": "/contact/sent/"}
-    redirects = [f"{old} {ROUTES[k][1]} 301" for k, old in old_en.items() if old != ROUTES[k][0]]
+    if BILINGUAL:
+        # The English-only preview served English pages at the root; send those URLs to their /en/ counterparts.
+        old_en = {k: SLUGS[k][1][3:] for k in SLUGS if k != "home"}
+        redirects = [f"{old} {ROUTES[k][1]} 301" for k, old in old_en.items() if old != ROUTES[k][0]]
+    else:
+        # Bilingual preview URLs (/en/... and the Indonesian slugs) point to their English pages.
+        redirects = ["/en/* /:splat 301"] + [f"{SLUGS[k][0]} {ROUTES[k][1]} 301" for k in SLUGS
+                                              if SLUGS[k][0] != ROUTES[k][1] and k != "home"]
     (OUT / "_redirects").write_text("\n".join(redirects) + "\n", encoding="utf-8")
 
 
@@ -753,7 +760,7 @@ def main():
         shutil.rmtree(OUT)
     OUT.mkdir()
     assets = emit_assets()
-    for i in (0, 1):
+    for i in BUILD_LANGS:
         L[0] = i
         for key, build in BUILDERS.items():
             _BAND_N[0] = 0

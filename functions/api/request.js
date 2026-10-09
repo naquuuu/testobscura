@@ -18,8 +18,8 @@ const ORG_TYPES = ["", "bank", "fintech", "insurer", "payment", "consultancy", "
 const PLATFORMS = ["", "ios", "android", "both", "unsure"];
 const NAME_RE = /^[\p{L}\p{M} .'\-]{2,100}$/u;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-const SENT = { id: "/kontak/terkirim/", en: "/en/contact/sent/" };
-const BACK = { id: "/kontak/", en: "/en/contact/" };
+const SENT = { id: "/contact/sent/", en: "/contact/sent/" };
+const BACK = { id: "/contact/", en: "/contact/" };
 const FAIL = {
   id: "Permintaan Anda belum terkirim. Silakan kembali dan coba lagi nanti.",
   en: "Your request was not sent. Please go back and try again later.",

@@ -1,10 +1,10 @@
 # obscur4.online website
 
-Static bilingual site, graphics-led with motion (DECISIONS D9-D14). Bahasa Indonesia is the default at `/`, English sits under `/en/` (this reverses D12, English-only). Copy lives in `content.py` and `content_platform.py` as (Bahasa Indonesia, English) tuples, graphics in `illustrations.py`, motion in `assets/motion.js`. No framework and no npm dependencies. A Python script generates plain HTML into `public/`, and one Cloudflare Pages Function handles the request form.
+Static English site, graphics-led with motion (DECISIONS D9-D14). Copy lives in `content.py` and `content_platform.py` as (Bahasa Indonesia, English) tuples; the build uses the English side (`BUILD_LANGS` in `build.py` switches the Indonesian build back on), graphics in `illustrations.py`, motion in `assets/motion.js`. No framework and no npm dependencies. A Python script generates plain HTML into `public/`, and one Cloudflare Pages Function handles the request form.
 
 ```
 website/
-  content.py            page copy, (ID, EN) tuples; both languages are built  <- edit copy here
+  content.py            page copy, (ID, EN) tuples; the build uses the EN side  <- edit copy here
   content_platform.py   Platform page copy, (ID, EN) tuples
   illustrations.py      animated SVG graphics
   build.py              generator + quality gates
@@ -24,7 +24,7 @@ python build.py
 python -m http.server 8000 -d public
 ```
 
-Open http://localhost:8000 (Bahasa Indonesia) or http://localhost:8000/en/ (English). Use a local server rather than opening the files directly, because links are root-relative. Locally the form shows its "not sent" message, since `/api/request` only exists on Cloudflare.
+Open http://localhost:8000. Use a local server rather than opening the files directly, because links are root-relative. Locally the form shows its "not sent" message, since `/api/request` only exists on Cloudflare.
 
 **Production vs release.** `python build.py` makes the production site but keeps it out of search engines (noindex) until the release gates pass.
 
@@ -87,8 +87,7 @@ Hero headline ≤ 12 words and subline ≤ 25. Banned wording, competitor and ch
 ## Not included yet (by design)
 - **Analytics:** the spec calls for self-hosted, cookieless analytics in a Jakarta region (BUILD-BRIEF §6). Nothing is wired in, so there are no third-party requests.
 - **Open Graph image:** a text-only card per locale is specified. Pages currently use `twitter:card=summary` without an image.
-- **Copy:** all Bahasa Indonesia copy still needs native-speaker review before release, including the new Secure development page and the Platform page, whose Indonesian side was written later.
-- **Old English URLs:** the English-only preview served English at the root. `_redirects` sends those paths (for example `/awareness-phishing/`) to their `/en/` pages.
+- **Copy:** the Bahasa Indonesia copy is not built. If the Indonesian build is switched back on, all of it needs native-speaker review before release.
 
 ## Motion and verification
 - Only graphics animate; text is static. Visitors with "reduce motion" switched on see complete, still drawings.
