@@ -55,6 +55,9 @@ ICONS = {
     "chat": "M8 10 H40 V32 H22 L14 40 V32 H8 Z",
     "box": "M24 6 L42 14 V34 L24 42 L6 34 V14 Z|M6 14 L24 22 L42 14|M24 22 V42",
     "spark": "M24 6 V16 M24 32 V42 M6 24 H16 M32 24 H42",
+    "code": "M16 14 L6 24 L16 34|M32 14 L42 24 L32 34|M27 10 L21 38",
+    "branch": "M14 8 V40|M34 18 C34 28 14 26 14 34|M34 10 A4 4 0 1 0 34 18 A4 4 0 1 0 34 10",
+    "gate": "M10 42 V8 M38 42 V8|M10 18 H38 M10 30 H38",
 }
 
 
@@ -277,6 +280,51 @@ def cycle():
     for i, (x, y) in enumerate(((90, 20), (160, 90), (90, 160), (20, 90))):
         body += pop(f'<circle cx="{x}" cy="{y}" r="9"/>', 0.15 + i * 0.15, 0.22 + i * 0.15, "bf")
     return _fig("0 0 190 180", body, "ill-small")
+
+
+# ---------------------------------------------------------------- secure development drawings
+def code_gate():
+    """Secure development hero: a change (diff) fans out to three checks, meets one gate, leaves with one verdict."""
+    body = ln("M20 34 H132 V206 H20 Z", 0.0, 0.2)
+    for i, y in enumerate((60, 82, 104, 126, 148, 170)):
+        new = i in (2, 3)
+        w = (92, 70, 84, 60, 88, 52)[i]
+        if new:
+            body += pop(f'<rect x="28" y="{y - 8}" width="96" height="16" rx="4"/>', 0.18 + i * 0.02, 0.24 + i * 0.02, "tf")
+        body += ln(f"M36 {y} H{36 + w}", 0.12 + i * 0.03, 0.2 + i * 0.03, "b" if new else "")
+    ys = (66, 120, 174)
+    for i, y in enumerate(ys):
+        a = round(0.32 + i * 0.08, 3)
+        body += ln(f"M132 120 C160 120, 158 {y}, 186 {y}", a, round(a + 0.14, 3), "b dash")
+        body += pop(f'<rect x="186" y="{y - 17}" width="44" height="34" rx="9"/>', round(a + 0.12, 3), round(a + 0.2, 3), "pf")
+        body += ln(f"M186 {y - 17} H230 V{y + 17} H186 Z", round(a + 0.12, 3), round(a + 0.22, 3))
+        body += f'<circle class="flow-dot" r="4" data-curve="132,120,160,120,158,{y},186,{y}" data-off="{i / 3:.2f}"/>'
+        body += ln(f"M230 {y} H262", round(a + 0.2, 3), round(a + 0.28, 3), "b")
+    body += ln("M198 66 L192 66 M198 60 L192 66 L198 72 M218 60 L224 66 L218 72", 0.5, 0.58)
+    body += ln("M200 120 a8 8 0 1 0 16 0 a8 8 0 1 0 -16 0 M216 120 H224 M221 120 V125", 0.56, 0.64)
+    body += ln("M198 166 L208 162 L218 166 V180 L208 184 L198 180 Z", 0.62, 0.7)
+    body += pop('<rect x="262" y="40" width="14" height="160" rx="7"/>', 0.7, 0.78, "bf")
+    body += ln("M276 120 H300", 0.78, 0.84, "b")
+    body += pop('<circle cx="324" cy="120" r="24"/>', 0.82, 0.9, "tf")
+    body += ring(324, 120, 24, 0.84, 0.94, "b")
+    body += ln("M313 121 L321 129 L336 112", 0.92, 0.99, "b")
+    return _fig("0 0 360 240", body, "ill-flow", scene="art flow")
+
+
+def code_baseline():
+    """Secure development problem: old findings sit inside the baseline; only the new one meets the gate."""
+    body = ln("M18 22 H196 V214 H18 Z", 0.0, 0.25, "dash")
+    for r in range(5):
+        for c in range(5):
+            x, y = 34 + c * 32, 38 + r * 34
+            a = round(0.15 + (r * 5 + c) * 0.012, 3)
+            body += pop(f'<rect x="{x}" y="{y}" width="20" height="20" rx="4"/>', a, round(a + 0.05, 3), "pf")
+            body += ln(f"M{x} {y} H{x + 20} V{y + 20} H{x} Z", a, round(a + 0.06, 3))
+    body += pop('<rect x="236" y="104" width="28" height="28" rx="6"/>', 0.6, 0.7, "bf")
+    body += ln("M222 118 H236", 0.55, 0.62, "b dash")
+    body += pop('<rect x="282" y="66" width="12" height="104" rx="6"/>', 0.7, 0.8, "bf")
+    body += ln("M264 118 H282", 0.75, 0.82, "b")
+    return _fig("0 0 324 236", body)
 
 
 # ---------------------------------------------------------------- mobile capability diagrams (tab explorer)

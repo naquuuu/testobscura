@@ -13,7 +13,7 @@
     messageLen: form.dataset.errMessageLen,
     phone: form.dataset.errPhone
   };
-  var TOPICS = ["awareness", "mobile", "partner", "briefing", "other"];
+  var TOPICS = ["awareness", "code", "mobile", "partner", "briefing", "other"];
   var NAME_RE = /^[\p{L}\p{M} .'\-]{2,100}$/u;
   var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 

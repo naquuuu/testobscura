@@ -1,10 +1,11 @@
-"""Static site generator for obscur4.online (English-only, DECISIONS D12).
+"""Static site generator for obscur4.online, in Bahasa Indonesia (default, at /) and English (under /en/).
 
     python build.py            # production build -> public/ (noindex until release.json "indexable" is true)
     python build.py --release  # same, but also enforces the release gates and makes the site indexable
 
 Standard library only. Output is plain static HTML for Cloudflare Pages (see README.md).
-Copy lives in content.py (ID/EN tuples; this build uses the EN side) and content_platform.py.
+Copy lives in content.py and content_platform.py as (Bahasa Indonesia, English) tuples; every page is built in both.
+This reverses D12 (English-only): the Indonesian copy needs the native-speaker review gate before release.
 """
 import hashlib
 import html
@@ -14,7 +15,8 @@ import shutil
 import sys
 from pathlib import Path
 
-from content import BUNDLE, CHROME, COMPARE, LURE, NOT_FOUND, PAGES, PATH, SITE, DOMAIN
+from content import (BUNDLE, CHROME, CODE_BUNDLE, COMPARE, KICKERS, LURE, NOT_FOUND, PAGES, PATH, SITE, SLUGS,
+                     STORY, UI, DOMAIN)
 from content_platform import PLATFORM
 
 ROOT = Path(__file__).parent
@@ -29,20 +31,17 @@ CONTACT_EMAIL = CFG.get("contact_email") or ""
 ORIGIN = f"https://{DOMAIN}"
 PROBLEMS = []
 
-ROUTES = {
-    "home": "/", "awareness": "/awareness-phishing/", "mobile": "/mobile-assessment/", "how": "/how-we-work/",
-    "platform": "/platform/", "partners": "/partners/", "about": "/about/", "contact": "/contact/",
-    "privacy": "/privacy/", "sent": "/contact/sent/",
-}
-SOLUTIONS = [("awareness", "Awareness & phishing", "Managed, localized campaigns and training", "inbox"),
-             ("mobile", "Mobile assessment", "Evidence-grade testing of protected app builds", "phone")]
-NAV = [("how", "How we work"), ("platform", "Platform"), ("partners", "Partners"), ("about", "About")]
+LANGS = ("id", "en")
+L = [0]  # language being built: 0 = Bahasa Indonesia (default, at /), 1 = English (under /en/)
+ROUTES = dict(SLUGS)  # key -> (Indonesian path, English path)
+SOLUTIONS = CHROME["solutions"]
+NAV = CHROME["nav"]
 
 
 # ------------------------------------------------------------------ text helpers
 def E(v):
-    """English side of a (ID, EN) tuple; plain strings pass through."""
-    return v[1] if isinstance(v, tuple) else v
+    """The current language's side of a (ID, EN) tuple; plain strings pass through."""
+    return v[L[0]] if isinstance(v, tuple) else v
 
 
 def rich(text, link=None):
@@ -70,7 +69,7 @@ def plain(text):
 
 
 def to(key, query=""):
-    return BASE + ROUTES[key] + query
+    return BASE + ROUTES[key][L[0]] + query
 
 
 def req(topic):
@@ -99,35 +98,62 @@ def emit_assets():
 
 
 # ------------------------------------------------------------------ page shell
+def alt_href(key):
+    """Counterpart page in the other language (falls back to that language's home)."""
+    other = 1 - L[0]
+    return BASE + (ROUTES[key][other] if key in ROUTES else ROUTES["home"][other])
+
+
+def lang_switch(cls="lang-switch", long=False):
+    other = 1 - L[0]
+    text = CHROME["lang_switch"] if long else CHROME["lang_switch_short"]
+    return (f'<a class="{cls}" href="{alt_href(PAGE_KEY[0])}" hreflang="{LANGS[other]}" lang="{LANGS[other]}" '
+            f'title="{esc(CHROME["lang_switch_label"])}">{esc(text)}</a>')
+
+
+PAGE_KEY = ["home"]
+
+
 def page(key, title, desc, body, assets, form=False, index=True, closing_cta=True):
-    path = ROUTES.get(key, "/")
+    PAGE_KEY[0] = key
+    path = ROUTES[key][L[0]] if key in ROUTES else ROUTES["home"][L[0]]
     robots = "" if (INDEXABLE and index) else '<meta name="robots" content="noindex">'
     import illustrations as _I
     cur = lambda k: ' aria-current="page"' if k == key else ""
     in_sol = key in [k for k, *_ in SOLUTIONS]
+    sol_label = esc(CHROME["solutions_label"])
     items = "".join(f'<li><a class="dd-item" href="{to(k)}"{cur(k)}><span class="dd-ico">{_I.icon(ic, 0, 0.01)}</span>'
-                    f'<span><strong>{html.escape(t)}</strong><span class="dd-sub">{html.escape(sub)}</span></span></a></li>'
+                    f'<span><strong>{esc(t)}</strong><span class="dd-sub">{esc(sub)}</span></span></a></li>'
                     for k, t, sub, ic in SOLUTIONS)
     nav = (f'<li class="has-menu" data-menu><button class="nav-trigger" type="button" aria-expanded="false" aria-controls="menu-solutions"'
-           f'{" data-current" if in_sol else ""}>Solutions<svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 L6 7.5 L9 4.5"/></svg></button>'
+           f'{" data-current" if in_sol else ""}>{sol_label}<svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 L6 7.5 L9 4.5"/></svg></button>'
            f'<div class="dropdown" id="menu-solutions"><ul>{items}</ul></div></li>')
-    nav += "".join(f'<li><a href="{to(k)}"{cur(k)}{" data-current" if k == key else ""}>{html.escape(lbl)}</a></li>' for k, lbl in NAV)
-    sol_sheet = "".join(f'<li><a href="{to(k)}"{cur(k)}>{html.escape(t)}</a></li>' for k, t, *_ in SOLUTIONS)
-    sheet = (f'<li><a href="{to("home")}"{cur("home")}>Home</a></li>'
-             f'<li class="sheet-group"><p class="label">Solutions</p><ul>{sol_sheet}</ul></li>'
-             + "".join(f'<li><a href="{to(k)}"{cur(k)}>{html.escape(lbl)}</a></li>' for k, lbl in NAV + [("contact", "Contact")]))
+    nav += "".join(f'<li><a href="{to(k)}"{cur(k)}{" data-current" if k == key else ""}>{esc(lbl)}</a></li>' for k, lbl in NAV)
+    sol_sheet = "".join(f'<li><a href="{to(k)}"{cur(k)}>{esc(t)}</a></li>' for k, t, *_ in SOLUTIONS)
+    sheet = (f'<li><a href="{to("home")}"{cur("home")}>{esc(CHROME["home"])}</a></li>'
+             f'<li class="sheet-group"><p class="label">{sol_label}</p><ul>{sol_sheet}</ul></li>'
+             + "".join(f'<li><a href="{to(k)}"{cur(k)}>{esc(lbl)}</a></li>' for k, lbl in NAV + [("contact", CHROME["contact"])]))
     ld = ""
     if key == "home":
         ld = '<script type="application/ld+json">' + json.dumps(
             {"@context": "https://schema.org", "@type": "Organization", "name": SITE, "url": ORIGIN + "/",
              "email": CONTACT_EMAIL}) + "</script>"
+    alternates = ""
+    if key in ROUTES and index:
+        alternates = "".join(f'<link rel="alternate" hreflang="{LANGS[i]}" href="{ORIGIN}{ROUTES[key][i]}">' for i in (0, 1))
+        alternates += f'<link rel="alternate" hreflang="x-default" href="{ORIGIN}{ROUTES[key][0]}">'
     form_js = f'<script src="{assets["site.js"]}" defer></script>' if form else ""
     mcta = "" if key in ("contact", "sent") or not closing_cta else (
         f'<div class="mcta" data-mcta><a class="btn btn-primary" href="{to("contact")}">{esc(CHROME["nav_button"])}</a></div>')
     d = html.escape(plain(desc)[:160], quote=True)
     t = html.escape(plain(title), quote=True)
+    home_title = html.escape(E(CHROME["home_title"]), quote=True)
+    home_aria = html.escape(E(CHROME["home_aria"]), quote=True)
+    nav_aria = html.escape(E(CHROME["nav_aria"]), quote=True)
+    brand = (f'<svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9"/>'
+             f'<path d="M19 7.5 L9.5 19.5 H23 M19 7.5 V25"/></svg><span class="brand-word">obscur<span class="brand-4">4</span></span>')
     return f"""<!doctype html>
-<html lang="en">
+<html lang="{LANGS[L[0]]}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -135,8 +161,10 @@ def page(key, title, desc, body, assets, form=False, index=True, closing_cta=Tru
 <meta name="description" content="{d}">
 {robots}
 <link rel="canonical" href="{ORIGIN}{path}">
+{alternates}
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="{SITE}">
+<meta property="og:locale" content="{("id_ID", "en_US")[L[0]]}">
 <meta property="og:title" content="{t}">
 <meta property="og:description" content="{d}">
 <meta property="og:url" content="{ORIGIN}{path}">
@@ -150,16 +178,18 @@ def page(key, title, desc, body, assets, form=False, index=True, closing_cta=Tru
 {ld}
 </head>
 <body>
-<a class="skip" href="#main">Skip to content</a>
+<a class="skip" href="#main">{esc(CHROME['skip'])}</a>
 <header class="site-header" data-header>
   <div class="wrap header-row">
-    <a class="brand" href="{BASE}/" title="Back to the homepage" aria-label="obscur4, back to the homepage"{" aria-current=\"page\"" if key == "home" else ""}><svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9"/><path d="M19 7.5 L9.5 19.5 H23 M19 7.5 V25"/></svg><span class="brand-word">obscur<span class="brand-4">4</span></span></a>
-    <nav class="nav" aria-label="Main" data-nav><ul>{nav}</ul><span class="nav-ind" aria-hidden="true"></span></nav>
+    <a class="brand" href="{to('home')}" title="{home_title}" aria-label="{home_aria}"{" aria-current=\"page\"" if key == "home" else ""}>{brand}</a>
+    <nav class="nav" aria-label="{nav_aria}" data-nav><ul>{nav}</ul><span class="nav-ind" aria-hidden="true"></span></nav>
+    {lang_switch()}
     <a class="btn btn-primary btn-sm header-cta" href="{to('contact')}">{esc(CHROME['nav_button'])}</a>
     <details class="msheet" data-sheet>
-      <summary><span class="when-closed">Menu</span><span class="when-open">{esc(CHROME['menu_close'])}</span></summary>
+      <summary><span class="when-closed">{esc(CHROME['menu'])}</span><span class="when-open">{esc(CHROME['menu_close'])}</span></summary>
       <div class="msheet-panel">
-        <nav aria-label="Main"><ul>{sheet}</ul></nav>
+        <nav aria-label="{nav_aria}"><ul>{sheet}</ul></nav>
+        {lang_switch("lang-switch lang-switch-sheet", long=True)}
         <a class="btn btn-primary" href="{to('contact')}">{esc(CHROME['nav_button'])}</a>
       </div>
     </details>
@@ -170,33 +200,29 @@ def page(key, title, desc, body, assets, form=False, index=True, closing_cta=Tru
 {body}
 </main>
 {mcta}
-{footer()}
+{footer(brand, home_title, home_aria)}
 </body>
 </html>
 """
 
 
-def footer():
+def footer(brand, home_title, home_aria):
     mail = (f'<li><a href="mailto:{html.escape(CONTACT_EMAIL)}">{html.escape(CONTACT_EMAIL)}</a></li>' if CONTACT_EMAIL else "")
+    sols = "".join(f'<li><a href="{to(k)}">{esc(t)}</a></li>' for k, t, *_ in SOLUTIONS)
+    company = "".join(f'<li><a href="{to(k)}">{esc(lbl)}</a></li>' for k, lbl in NAV)
     return f"""<footer class="site-footer">
   <div class="wrap">
     <div class="footer-grid">
       <div class="footer-about">
-        <a class="brand" href="{BASE}/" title="Back to the homepage" aria-label="obscur4, back to the homepage"><svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9"/><path d="M19 7.5 L9.5 19.5 H23 M19 7.5 V25"/></svg><span class="brand-word">obscur<span class="brand-4">4</span></span></a>
+        <a class="brand" href="{to('home')}" title="{home_title}" aria-label="{home_aria}">{brand}</a>
         <p>{esc(CHROME['tagline'])}</p>
       </div>
-      <div><h2>Solutions</h2><ul>
-        <li><a href="{to('awareness')}">Awareness &amp; phishing</a></li>
-        <li><a href="{to('mobile')}">Mobile assessment</a></li></ul></div>
-      <div><h2>{esc(CHROME['footer_company'])}</h2><ul>
-        <li><a href="{to('how')}">How we work</a></li>
-        <li><a href="{to('platform')}">Platform</a></li>
-        <li><a href="{to('partners')}">Partners</a></li>
-        <li><a href="{to('about')}">About</a></li></ul></div>
-      <div><h2>Contact</h2><ul>
+      <div><h2>{esc(CHROME['solutions_label'])}</h2><ul>{sols}</ul></div>
+      <div><h2>{esc(CHROME['footer_company'])}</h2><ul>{company}</ul></div>
+      <div><h2>{esc(CHROME['footer_contact'])}</h2><ul>
         <li><a href="{to('contact')}">{esc(CHROME['nav_button'])}</a></li>{mail}</ul></div>
     </div>
-    <div class="footer-base"><span>&copy; {SITE}</span><span><a href="{to('privacy')}">Privacy notice</a> &middot; <a href="#main">{esc(CHROME['to_top'])}</a></span></div>
+    <div class="footer-base"><span>&copy; {SITE}</span><span>{lang_switch("footer-lang", long=True)} &middot; <a href="{to('privacy')}">{esc(CHROME['footer_privacy'])}</a> &middot; <a href="#main">{esc(CHROME['to_top'])}</a></span></div>
   </div>
 </footer>"""
 
@@ -208,25 +234,12 @@ def btns(items):
         for i, (t, u) in enumerate(items)) + "</div>"
 
 
-KICKERS = {
-    "home": ("obscur4", "Security awareness and mobile assessment"),
-    "awareness": ("Lead service", "Managed programme"),
-    "mobile": ("Specialist service", "Evidence-grade assessment"),
-    "how": ("How we work", "Authorization, evidence, data"),
-    "platform": ("Platform", "Infrastructure overview"),
-    "partners": ("Partners", "Referral, resale, delivery"),
-    "about": ("About", "One platform, two services"),
-    "contact": ("Contact", "We reply by email"),
-    "privacy": ("Privacy notice", "Effective 8 October 2026"),
-}
-
-
 def kicker(key):
     if key not in KICKERS:
         return ""
     l, r = KICKERS[key]
-    return (f'<p class="kicker" data-scene="kicker"><span>{html.escape(l)}</span>'
-            f'<span class="dots" aria-hidden="true"></span><span class="kr">{html.escape(r)}</span></p>')
+    return (f'<p class="kicker" data-scene="kicker"><span>{esc(l)}</span>'
+            f'<span class="dots" aria-hidden="true"></span><span class="kr">{esc(r)}</span></p>')
 
 
 def hero(h, sub, ctas, art="", key=None):
@@ -307,12 +320,12 @@ def lure(mini=False):
 </figure>"""
 
 
-def bundle():
+def bundle(data=BUNDLE):
     items = "".join(f'<li><span class="file-ico" aria-hidden="true"></span><span class="file-name">{html.escape(n)}</span>'
-                    f'<span class="file-note">{esc(note)}</span></li>' for n, note in BUNDLE["items"])
+                    f'<span class="file-note">{esc(note)}</span></li>' for n, note in data["items"])
     return f"""<figure class="art bundle" data-scene="bundle">
-  <figcaption class="art-label">{esc(BUNDLE['label'])}</figcaption>
-  <div class="manifest"><div class="manifest-head"><span class="folder" aria-hidden="true"></span><strong>evidence-bundle</strong></div>
+  <figcaption class="art-label">{esc(data['label'])}</figcaption>
+  <div class="manifest"><div class="manifest-head"><span class="folder" aria-hidden="true"></span><strong>{html.escape(data['root'])}</strong></div>
   <ul class="files">{items}</ul></div>
 </figure>"""
 
@@ -406,43 +419,31 @@ def model_diag(kind, i):
 
 
 # ------------------------------------------------------------------ pages
-STORY = [
-    ("It starts with one message.",
-     "Lures are written from message types common in Indonesian workplaces: parcel deliveries, bank notices, tax, a note from a manager."),
-    ("The signs are marked.",
-     "Every lure carries the signs staff should learn to notice: a sender that does not match its domain, time pressure, a link to somewhere else."),
-    ("The campaign reaches every target group.",
-     "Campaigns are scoped and authorized first, then launched from our platform to the groups you choose."),
-    ("Results come back by group.",
-     "Reports show how each group responded, and training follows where it is needed. Person-level results stay with administrators you designate."),
-    ("Every step leaves evidence.",
-     "Each campaign ends in a platform-generated report your audit and risk teams can follow."),
-]
-
-
 def home():
     p = PAGES["home"]
     body = hero(p["hero_h"], p["hero_sub"], [(p["cta1"], req("awareness")), (p["cta2"], to("how"))], I.network(), key="home")
-    steps = "".join(f'<li data-step><span class="step-mark" aria-hidden="true"></span><h3>{html.escape(t)}</h3><p>{html.escape(b)}</p></li>' for t, b in STORY)
+    steps = "".join(f'<li data-step><span class="step-mark" aria-hidden="true"></span><h3>{esc(t)}</h3><p>{esc(b)}</p></li>' for t, b in STORY)
     body += f"""<section class="story" data-scene="story"><div class="wrap">
-  <div class="story-head"><p class="label">How a campaign works</p><h2>From one message to evidence your auditors can follow</h2></div>
+  <div class="story-head"><p class="label">{esc(UI['story_label'])}</p><h2>{esc(UI['story_h'])}</h2></div>
   <div class="story-grid">
     <ol class="story-steps">{steps}</ol>
     <div class="story-stage">{I.story_stage()}</div>
   </div>
 </div></section>"""
     body += band(f"""{head(p['services_h'])}
-<div class="services">
-  <a class="panel panel-lead" href="{to('awareness')}">{I.inbox_report()}<p class="label">Lead service</p><h3>{esc(p['svc_a_t'])}</h3><p>{rich(p['svc_a_b'])}</p><span class="textlink">{esc(p['more'])}</span></a>
-  <a class="panel" href="{to('mobile')}">{I.cap_runtime()}<p class="label">Specialist service</p><h3>{esc(p['svc_b_t'])}</h3><p>{rich(p['svc_b_b'])}</p><span class="textlink">{esc(p['more'])}</span></a>
+<div class="services services-3">
+  <a class="panel panel-lead" href="{to('awareness')}">{I.inbox_report()}<p class="label">{esc(UI['lead_service'])}</p><h3>{esc(p['svc_a_t'])}</h3><p>{rich(p['svc_a_b'])}</p><span class="textlink">{esc(p['more'])}</span></a>
+  <a class="panel" href="{to('code')}">{I.code_gate()}<p class="label">{esc(UI['engineering_service'])}</p><h3>{esc(p['svc_c_t'])}</h3><p>{rich(p['svc_c_b'])}</p><span class="textlink">{esc(p['more'])}</span></a>
+  <a class="panel" href="{to('mobile')}">{I.cap_runtime()}<p class="label">{esc(UI['specialist_service'])}</p><h3>{esc(p['svc_b_t'])}</h3><p>{rich(p['svc_b_b'])}</p><span class="textlink">{esc(p['more'])}</span></a>
 </div>""", cls="band-paper")
     body += band(f"""{head(p['trust_h'], p['problem_b'])}{icon_items(p['trust'], ['lock', 'hash', 'eye-off'], 'icon-grid icon-grid-3')}
 <p class="more-link"><a class="textlink" href="{to('how')}">{esc(p['trust_link'])}</a></p>""")
     h = PAGES["how"]
-    body += band(f"""<div class="grid"><div class="c-1-5">{head(h['layers_h'], h['layers_intro'])}<a class="textlink" href="{to('platform')}">See the platform</a></div>
+    body += band(f"""<div class="grid"><div class="c-1-5">{head(h['layers_h'], h['layers_intro'])}<a class="textlink" href="{to('platform')}">{esc(UI['see_platform'])}</a></div>
 <div class="c-6-12">{teaser()}</div></div>""", cls="band-paper")
     body += band(statement(p["who_h"], p["who_b"], "users"))
-    body += closing(p["closing_h"], [(p["closing_a"], req("awareness")), (p["closing_b"], req("mobile"))], lure(mini=True))
+    body += closing(p["closing_h"], [(p["closing_a"], req("awareness")), (p["closing_c"], req("code")), (p["closing_b"], req("mobile"))],
+                    lure(mini=True))
     return p["meta_title"], p["meta_desc"], body
 
 
@@ -457,12 +458,34 @@ def awareness():
   <div class="tl-track" aria-hidden="true"><span class="tl-fill"></span><span class="tl-dot"></span></div>
   <ol class="tl">{st}</ol></div>""")
     arts = [I.single(), I.cycle()]
-    offers = "".join(f'<div class="offer">{arts[i]}<p class="label">{"Entry" if i == 0 else "Annual"}</p><h3>{esc(t)}</h3><p>{rich(b)}</p></div>'
+    offers = "".join(f'<div class="offer">{arts[i]}<p class="label">{esc(UI["entry"] if i == 0 else UI["annual"])}</p><h3>{esc(t)}</h3><p>{rich(b)}</p></div>'
                      for i, (t, b) in enumerate(p["offers"]))
     body += band(f'{head(p["ways_h"])}<div class="offers">{offers}</div>', cls="band-paper")
     body += band(f'{head(p["get_h"])}{check_list(p["get"])}')
     body += band(statement(p["who_h"], p["who_b"], "users"), cls="band-paper")
     body += closing(p["closing_h"], [(p["closing_cta"], req("awareness"))])
+    return p["meta_title"], p["hero_sub"], body
+
+
+def code():
+    p = PAGES["code"]
+    body = hero(p["hero_h"], p["hero_sub"], [(p["cta1"], req("code")), (p["cta2"], to("how"))], I.code_gate(), key="code")
+    body += band(media(p["problem_h"], f'<p class="prose">{rich(p["problem_b"])}</p>', I.code_baseline()), cls="band-paper")
+    body += band(f'{head(p["what_h"])}' + icon_items(p["what"], ["code", "key", "box"], "icon-grid icon-grid-3"))
+    icons = ["lock", "layers", "branch", "gauge", "report"]
+    st = "".join(f'<li class="tl-station"><div class="tl-node">{I.icon(icons[i], 0, 1)}</div><h3>{esc(t)}</h3><p>{rich(b)}</p></li>'
+                 for i, (t, b) in enumerate(p["steps"]))
+    body += band(f"""{head(p['how_h'])}<div class="timeline" data-scene="timeline">
+  <div class="tl-track" aria-hidden="true"><span class="tl-fill"></span><span class="tl-dot"></span></div>
+  <ol class="tl">{st}</ol></div>""", cls="band-paper")
+    arts = [I.single(), I.cycle()]
+    offers = "".join(f'<div class="offer">{arts[i]}<p class="label">{esc(UI["entry"] if i == 0 else UI["ongoing"])}</p><h3>{esc(t)}</h3><p>{rich(b)}</p></div>'
+                     for i, (t, b) in enumerate(p["offers"]))
+    body += band(f'{head(p["ways_h"])}<div class="offers">{offers}</div>')
+    body += band(f"""<div class="media"><div class="media-text">{head(p['get_h'])}{check_list(p['get'])}</div>
+<div class="media-art">{bundle(CODE_BUNDLE)}</div></div>""", cls="band-paper")
+    body += band(f'<div class="duo">{statement(p["who_h"], p["who_b"], "users")}{statement(p["trust_h"], p["trust_b"], "lock")}</div>')
+    body += closing(p["closing_h"], [(p["closing_cta"], req("code"))])
     return p["meta_title"], p["hero_sub"], body
 
 
@@ -498,7 +521,7 @@ def how():
         body += band(media(title, check_list(items), arts[sid], flip=bool(i % 2)), cls="band-paper" if i % 2 else "", sid=sid)
     xs = "".join(f'<li>{I.icon("eye-off", 0.1 + i * 0.12, 0.4 + i * 0.12, "ico-x")}<span>{rich(it)}</span></li>' for i, it in enumerate(p["not"]))
     body += band(f'{head(p["not_h"])}<ul class="checks checks-x" data-scene="art">{xs}</ul>'
-                 f'<p class="more-link"><a class="textlink" href="{to("platform")}">See the platform</a></p>')
+                 f'<p class="more-link"><a class="textlink" href="{to("platform")}">{esc(UI["see_platform"])}</a></p>')
     body += closing(p["band_h"], [(p["band_cta"], req("briefing"))])
     return p["meta_title"], p["hero_sub"], body
 
@@ -508,24 +531,24 @@ def platform():
     body = hero(P["hero_h"], P["hero_sub"], [(P["band_cta"], req("briefing"))], workspaces(), key="platform")
     rows_html = ""
     for i, (name, desc) in enumerate(P["layers"]):
-        stamp = '<span class="stamp">authorized</span>' if i == 1 else ""
-        rows_html += f'<li data-step><span class="step-mark" aria-hidden="true"></span><h3>{html.escape(name)}{stamp}</h3><p>{html.escape(desc)}</p></li>'
+        stamp = f'<span class="stamp">{esc(UI["stamp"])}</span>' if i == 1 else ""
+        rows_html += f'<li data-step><span class="step-mark" aria-hidden="true"></span><h3>{esc(name)}{stamp}</h3><p>{esc(desc)}</p></li>'
     body += f"""<section class="band band-paper layers-band" data-scene="layerscroll"><div class="wrap">
   {head(P['stack_h'], P['stack_intro'])}
   <div class="layers-grid"><div class="layers-stage">{I.stack_svg(False)}</div><ol class="layer-list">{rows_html}</ol></div>
-  <p class="feedback">{I.icon("cycle", 0, 0.6, "ico-inline")}{html.escape(P['feedback'])}</p>
+  <p class="feedback">{I.icon("cycle", 0, 0.6, "ico-inline")}{esc(P['feedback'])}</p>
 </div></section>"""
-    lanes = "".join(f'<div class="lane"><h3>{html.escape(n)}</h3><p>{html.escape(sub)}</p><ul class="chips">'
-                    + "".join(f'<li class="chip">{html.escape(t)}</li>' for t in tasks) + "</ul></div>" for n, sub, tasks in P["lanes"])
+    lanes = "".join(f'<div class="lane"><h3>{esc(n)}</h3><p>{esc(sub)}</p><ul class="chips">'
+                    + "".join(f'<li class="chip">{esc(t)}</li>' for t in tasks) + "</ul></div>" for n, sub, tasks in P["lanes"])
     body += band(f'{head(P["lanes_h"], P["lanes_intro"])}{I.routing()}<div class="lanes">{lanes}</div>')
     body += band(f'{head(P["provider_h"], P["provider_intro"])}' + icon_items(P["provider"], ["layers", "key", "gauge", "log", "eye-off", "swap"], "icon-grid icon-grid-3"), cls="band-paper")
     body += band(f'{head(P["controls_h"])}' + icon_items(P["controls"], ["key", "shield", "log", "lock"], "icon-grid icon-grid-4"))
     c_t, c_items = P["boundary_client"]
     i_t, i_items = P["boundary_internal"]
     body += band(f"""{head(P['boundary_h'])}<div class="boundary">
-<div class="side">{I.icon("users", 0, 0.6)}<h3>{html.escape(c_t)}</h3><ul>{"".join(f"<li>{html.escape(x)}</li>" for x in c_items)}</ul></div>
+<div class="side">{I.icon("users", 0, 0.6)}<h3>{esc(c_t)}</h3><ul>{"".join(f"<li>{esc(x)}</li>" for x in c_items)}</ul></div>
 <div class="wall" aria-hidden="true"></div>
-<div class="side side-dark">{I.icon("box", 0, 0.6)}<h3>{html.escape(i_t)}</h3><ul>{"".join(f"<li>{html.escape(x)}</li>" for x in i_items)}</ul></div></div>""", cls="band-paper")
+<div class="side side-dark">{I.icon("box", 0, 0.6)}<h3>{esc(i_t)}</h3><ul>{"".join(f"<li>{esc(x)}</li>" for x in i_items)}</ul></div></div>""", cls="band-paper")
     body += closing(P["band_h"], [(P["band_cta"], req("briefing"))])
     return P["meta_title"], P["hero_sub"], body
 
@@ -534,8 +557,8 @@ def partners():
     p = PAGES["partners"]
     body = hero(p["hero_h"], p["hero_sub"], [(p["cta"], req("partner"))], I.hub(), key="partners")
     body += band(statement(p["why_h"], p["why_b"], "link"), cls="band-paper")
-    labels = ["Referral, then delivery", "Resell", "Referral only"]
-    models = "".join(f'<div class="model">{model_diag(i, i)}<p class="label">{labels[i]}</p><h3>{esc(t)}</h3><p>{rich(b)}</p></div>'
+    labels = UI["partner_labels"]
+    models = "".join(f'<div class="model">{model_diag(i, i)}<p class="label">{esc(labels[i])}</p><h3>{esc(t)}</h3><p>{rich(b)}</p></div>'
                      for i, (t, b) in enumerate(p["models"]))
     body += band(f'{head(p["models_h"])}<div class="models">{models}</div><p class="muted note">{rich(p["terms"])}</p>')
     body += closing(p["cta"], [(p["cta"], req("partner"))])
@@ -571,15 +594,15 @@ def contact():
     def d(name, hint=False):
         return f'aria-describedby="err-{name}' + (f' hint-{name}' if hint else "") + '"'
 
-    topic_icons = {"awareness": "inbox", "mobile": "phone", "partner": "link", "briefing": "chat", "other": "spark"}
+    topic_icons = {"awareness": "inbox", "code": "code", "mobile": "phone", "partner": "link", "briefing": "chat", "other": "spark"}
     topics = "".join(f'<label class="pill pill-ico"><input type="radio" name="topic" value="{v}" required><span>{I.icon(topic_icons[v], 0, 0.01)}{esc(t)}</span></label>'
                      for v, t in p["topics"])
-    reply = "".join(f'<label class="pill"><input type="radio" name="reply_language" value="{v}"{" checked" if v == "en" else ""}><span>{html.escape(t)}</span></label>'
-                    for v, t in (("en", "English"), ("id", "Bahasa Indonesia")))
+    reply = "".join(f'<label class="pill"><input type="radio" name="reply_language" value="{v}"{" checked" if v == LANGS[L[0]] else ""}><span>{html.escape(t)}</span></label>'
+                    for v, t in (("id", "Bahasa Indonesia"), ("en", "English")))
     form = f"""<form class="request-form" id="request-form" action="{BASE}/api/request" method="post"
   data-err-required="{esc(p['err_required'])}" data-err-email="{esc(p['err_email'])}" data-err-consent="{esc(p['err_consent'])}"
   data-err-format="{esc(p['err_format'])}" data-err-message-len="{esc(p['err_message_len'])}" data-err-phone="{esc(p['err_phone'])}">
-  <input type="hidden" name="lang" value="en"><input type="hidden" name="ts" value="">
+  <input type="hidden" name="lang" value="{LANGS[L[0]]}"><input type="hidden" name="ts" value="">
   <fieldset class="field" data-field="topic" aria-describedby="err-topic"><legend>{html.escape(lab['topic'])} <span class="req" aria-hidden="true">*</span></legend>
     <div class="choices choices-topics">{topics}</div><p class="err" id="err-topic" hidden></p></fieldset>
   <div class="form-row">
@@ -606,11 +629,9 @@ def contact():
 </form>
 <div class="form-success" id="form-success" tabindex="-1" hidden>{I.done()}<p>{rich(p['success'])}</p></div>
 <div class="sr-live" aria-live="polite" id="form-live"></div>"""
-    stages = [("You send a request", "We reply to the email address you give, in the language you choose."),
-              ("We agree scope", "If there is a fit, we agree scope and record written authorization before any work starts."),
-              ("Work runs through the platform", "Everything from the first campaign or test to the report comes out of the platform.")]
-    jl = "".join(f'<li><span class="j-node" aria-hidden="true"></span><h3>{html.escape(t)}</h3><p>{html.escape(b)}</p></li>' for t, b in stages)
-    aside = f"""<aside class="contact-aside"><p class="label">What happens next</p>
+    stages = UI["stages"]
+    jl = "".join(f'<li><span class="j-node" aria-hidden="true"></span><h3>{esc(t)}</h3><p>{esc(b)}</p></li>' for t, b in stages)
+    aside = f"""<aside class="contact-aside"><p class="label">{esc(UI['next_label'])}</p>
 <div class="journey-wrap" data-scene="journey"><span class="journey-rail" aria-hidden="true"></span><ol class="journey">{jl}</ol></div>
 <p class="aside-mail">{rich(p['alt'])}</p></aside>"""
     body = hero(p["hero_h"], p["hero_sub"], [], I.send(), key="contact")
@@ -624,19 +645,19 @@ def privacy():
     toc = "".join(f'<li><a href="#s{i + 1}">{esc(t)}</a></li>' for i, (t, _) in enumerate(p["sections"]))
     secs = "".join(f'<li id="s{i + 1}"><h2>{esc(t)}</h2><p>{rich(b)}</p></li>' for i, (t, b) in enumerate(p["sections"]))
     body = hero(p["hero_h"], None, [], I.isolation(), key="privacy")
-    body += band(f'<div class="legal-grid"><nav class="legal-toc" aria-label="Sections"><p class="label">On this page</p><ol>{toc}</ol></nav>'
+    body += band(f'<div class="legal-grid"><nav class="legal-toc" aria-label="{esc(UI['toc_aria'])}"><p class="label">{esc(UI['toc_label'])}</p><ol>{toc}</ol></nav>'
                  f'<div><p class="effective">{rich(p["effective"])}</p><ol class="legal">{secs}</ol></div></div>', cls="band-paper")
     return p["meta_title"], p["sections"][0][1], body
 
 
 def sent():
     c = PAGES["contact"]
-    body = f"""<section class="sent"><div class="wrap sent-grid"><div>{I.done()}</div><div><p class="label">Request sent</p><h1>{rich(c['success'])}</h1>
-{btns([(c['back_home'], BASE + '/')])}</div></div></section>"""
+    body = f"""<section class="sent"><div class="wrap sent-grid"><div>{I.done()}</div><div><p class="label">{esc(UI['sent_label'])}</p><h1>{rich(c['success'])}</h1>
+{btns([(c['back_home'], to('home'))])}</div></div></section>"""
     return PAGES["sent"]["meta_title"], c["success"], body
 
 
-BUILDERS = {"home": home, "awareness": awareness, "mobile": mobile, "how": how, "platform": platform,
+BUILDERS = {"home": home, "awareness": awareness, "code": code, "mobile": mobile, "how": how, "platform": platform,
             "partners": partners, "about": about, "contact": contact, "privacy": privacy, "sent": sent}
 
 
@@ -675,14 +696,20 @@ def write(rel, doc):
 
 
 def extras(assets):
-    nf = f"""<section class="sent"><div class="wrap sent-grid"><div>{I.lost()}</div><div><p class="label">Error 404</p><h1>{html.escape(E(NOT_FOUND['title']))}</h1>
-<p class="muted">The page may have moved. These are the main places to go from here.</p>
-{btns([('Home', BASE + '/'), ('Make a request', to('contact'))])}</div></div></section>"""
-    doc = page("404", "Page not found | obscur4", "Page not found.", nf, assets, index=False, closing_cta=False)
+    L[0] = 0
+    blocks = ""
+    for i in (0, 1):
+        L[0] = i
+        blocks += (f'<div lang="{LANGS[i]}"><p class="label">{esc(UI["nf_label"])}</p><h1>{html.escape(E(NOT_FOUND["title"]))}</h1>'
+                   f'<p class="muted">{esc(UI["nf_body"])}</p>'
+                   f'{btns([(CHROME["home"], to("home")), (CHROME["nav_button"], to("contact"))])}</div>')
+    L[0] = 0
+    nf = f"""<section class="sent"><div class="wrap sent-grid"><div>{I.lost()}</div><div class="nf-langs">{blocks}</div></div></section>"""
+    doc = page("404", UI["nf_title"], NOT_FOUND["title"], nf, assets, index=False, closing_cta=False)
     gate("404.html", doc)
     (OUT / "404.html").write_text(doc, encoding="utf-8")
 
-    urls = "".join(f"<url><loc>{ORIGIN}{r}</loc></url>" for k, r in ROUTES.items() if k != "sent")
+    urls = "".join(f"<url><loc>{ORIGIN}{r}</loc></url>" for k, pair in ROUTES.items() if k != "sent" for r in pair)
     (OUT / "sitemap.xml").write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
                                      + urls + "</urlset>\n", encoding="utf-8")
     (OUT / "robots.txt").write_text(f"User-agent: *\nAllow: /\nSitemap: {ORIGIN}/sitemap.xml\n" if INDEXABLE
@@ -704,10 +731,11 @@ def extras(assets):
         headers.append("  X-Robots-Tag: noindex")
     headers += ["", "/assets/*", "  Cache-Control: public, max-age=31536000, immutable", ""]
     (OUT / "_headers").write_text("\n".join(headers), encoding="utf-8")
-    # Old bilingual URLs from the first preview point to their English pages.
-    redirects = ["/en/* /:splat 301", "/kesadaran-phishing/ /awareness-phishing/ 301",
-                 "/penilaian-aplikasi-mobile/ /mobile-assessment/ 301", "/cara-kerja/ /how-we-work/ 301",
-                 "/mitra/ /partners/ 301", "/tentang/ /about/ 301", "/kontak/ /contact/ 301", "/privasi/ /privacy/ 301"]
+    # The English-only preview served English pages at the root; send those URLs to their /en/ counterparts.
+    old_en = {"awareness": "/awareness-phishing/", "mobile": "/mobile-assessment/", "how": "/how-we-work/",
+              "partners": "/partners/", "about": "/about/", "contact": "/contact/", "privacy": "/privacy/",
+              "sent": "/contact/sent/"}
+    redirects = [f"{old} {ROUTES[k][1]} 301" for k, old in old_en.items() if old != ROUTES[k][0]]
     (OUT / "_redirects").write_text("\n".join(redirects) + "\n", encoding="utf-8")
 
 
@@ -725,13 +753,15 @@ def main():
         shutil.rmtree(OUT)
     OUT.mkdir()
     assets = emit_assets()
-    for key, build in BUILDERS.items():
-        _BAND_N[0] = 0
-        title, desc, body = build()
-        doc = page(key, E(title), E(desc), body, assets, form=(key == "contact"), index=(key != "sent"),
-                   closing_cta=key not in ("privacy",))
-        gate(ROUTES[key], doc)
-        write(ROUTES[key], doc)
+    for i in (0, 1):
+        L[0] = i
+        for key, build in BUILDERS.items():
+            _BAND_N[0] = 0
+            title, desc, body = build()
+            doc = page(key, E(title), E(desc), body, assets, form=(key == "contact"), index=(key != "sent"),
+                       closing_cta=key not in ("privacy",))
+            gate(ROUTES[key][i], doc)
+            write(ROUTES[key][i], doc)
     extras(assets)
     if RELEASE:
         release_gates()

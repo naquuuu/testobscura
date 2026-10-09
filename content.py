@@ -9,8 +9,10 @@ DOMAIN = "obscur4.online"
 SLUGS = {
     "home":      ("/", "/en/"),
     "awareness": ("/kesadaran-phishing/", "/en/awareness-phishing/"),
+    "code":      ("/pengembangan-aman/", "/en/secure-development/"),
     "mobile":    ("/penilaian-aplikasi-mobile/", "/en/mobile-assessment/"),
     "how":       ("/cara-kerja/", "/en/how-we-work/"),
+    "platform":  ("/platform/", "/en/platform/"),
     "partners":  ("/mitra/", "/en/partners/"),
     "about":     ("/tentang/", "/en/about/"),
     "contact":   ("/kontak/", "/en/contact/"),
@@ -20,27 +22,41 @@ SLUGS = {
 
 CHROME = {
     "nav": [
-        ("home", ("Beranda", "Home")),
-        ("awareness", ("Kesadaran & Phishing", "Awareness & Phishing")),
-        ("mobile", ("Penilaian Aplikasi Mobile", "Mobile Assessment")),
-        ("how", ("Cara Kerja", "How We Work")),
+        ("how", ("Cara kerja", "How we work")),
+        ("platform", ("Platform", "Platform")),
         ("partners", ("Mitra", "Partners")),
         ("about", ("Tentang", "About")),
-        ("contact", ("Kontak", "Contact")),
     ],
+    # (key, title, dropdown subline, icon) for the Solutions menu, footer and mobile sheet.
+    "solutions": [
+        ("awareness", ("Kesadaran & phishing", "Awareness & phishing"),
+         ("Kampanye dan pelatihan berlokal, kami kelola", "Managed, localized campaigns and training"), "inbox"),
+        ("code", ("Pengembangan aman", "Secure development"),
+         ("Satu keputusan untuk setiap pull request", "One verdict for every pull request"), "code"),
+        ("mobile", ("Penilaian aplikasi mobile", "Mobile assessment"),
+         ("Pengujian build terproteksi berbasis bukti", "Evidence-grade testing of protected app builds"), "phone"),
+    ],
+    "solutions_label": ("Layanan", "Solutions"),
+    "home": ("Beranda", "Home"),
+    "contact": ("Kontak", "Contact"),
     "nav_button": ("Ajukan permintaan", "Make a request"),
     "lang_switch": ("English", "Bahasa Indonesia"),
+    "lang_switch_short": ("EN", "ID"),
+    "lang_switch_label": ("Baca dalam bahasa Inggris", "Read in Bahasa Indonesia"),
     "menu": ("Menu", "Menu"),
     "skip": ("Langsung ke konten", "Skip to content"),
-    "tagline": ("Kesadaran keamanan dan penilaian aplikasi mobile untuk organisasi di Indonesia.",
-                "Security awareness and mobile app assessment for organizations in Indonesia."),
-    "footer_privacy": ("Pemberitahuan Privasi", "Privacy Notice"),
+    "home_title": ("Kembali ke beranda", "Back to the homepage"),
+    "home_aria": ("obscur4, kembali ke beranda", "obscur4, back to the homepage"),
+    "nav_aria": ("Utama", "Main"),
+    "tagline": ("Kesadaran keamanan, pengembangan aman, dan penilaian aplikasi mobile untuk organisasi di Indonesia.",
+                "Security awareness, secure development and mobile app assessment for organizations in Indonesia."),
+    "footer_privacy": ("Pemberitahuan privasi", "Privacy notice"),
     "footer_contact": ("Kontak", "Contact"),
     "menu_close": ("Tutup", "Close"),
-    "to_top": ("Back to top", "Back to top"),
-    "footer_services": ("Services", "Services"),
-    "footer_company": ("Company", "Company"),
-    "scroll_hint": ("Scroll", "Scroll"),
+    "to_top": ("Kembali ke atas", "Back to top"),
+    "footer_services": ("Layanan", "Services"),
+    "footer_company": ("Perusahaan", "Company"),
+    "scroll_hint": ("Gulir", "Scroll"),
     "preview_bar": ("Pratinjau. Belum untuk publikasi: beberapa isi masih menunggu keputusan.",
                     "Preview. Not for publication: some content is still pending decisions."),
 }
@@ -59,13 +75,16 @@ PAGES["home"] = {
                  "We run localized phishing campaigns and Bahasa Indonesia training for you, and report in a form your audit and risk teams can use."),
     "cta1": ("Ajukan Baseline", "Request a Baseline"),
     "cta2": ("Lihat cara kerja kami", "See how we work"),
-    "services_h": ("Dua layanan", "Two services"),
+    "services_h": ("Tiga layanan", "Three services"),
     "svc_a_t": ("Kesadaran keamanan dan simulasi phishing", "Awareness and phishing simulation"),
     "svc_a_b": ("Program terkelola: kampanye phishing yang disusun untuk konteks Indonesia, modul pelatihan berbahasa Indonesia, dan pelaporan triwulanan. Mulai dari satu kampanye Baseline.",
                 "A managed programme: phishing campaigns written for Indonesian context, Bahasa Indonesia training modules and quarterly reporting. Start with one Baseline campaign."),
     "svc_b_t": ("Penilaian aplikasi mobile", "Mobile app assessment"),
     "svc_b_b": ("Penilaian spesialis atas satu build aplikasi. Setiap temuan disertai artefak dan langkah reproduksinya.",
                 "A specialist assessment of one app build. Each finding comes with its artifact and the steps to reproduce it."),
+    "svc_c_t": ("Gerbang pengembangan aman", "Secure development gate"),
+    "svc_c_b": ("Pemeriksaan kode, rahasia, dan dependensi pada setiap pull request. Hanya masalah baru yang menahan rilis, dan setiap pemeriksaan meninggalkan catatan.",
+                "Code, secret and dependency checks on every pull request. Only new problems block a release, and every run leaves a record."),
     "more": ("Selengkapnya", "Read more"),
     "problem_h": ("Pengujian keamanan kini bagian dari pekerjaan yang diatur",
                   "Security testing is now part of regulated work"),
@@ -90,6 +109,7 @@ PAGES["home"] = {
     "closing_h": ("Sampaikan apa yang perlu Anda uji.", "Tell us what you need to test."),
     "closing_a": ("Ajukan Baseline", "Request a Baseline"),
     "closing_b": ("Ajukan penilaian aplikasi mobile", "Request a mobile assessment"),
+    "closing_c": ("Ajukan Baseline kode", "Request a code Baseline"),
 }
 
 # ---------------------------------------------------------------- 2. Awareness
@@ -147,6 +167,94 @@ PAGES["awareness"] = {
               "Cyber and IT-risk heads at OJK-supervised firms such as banks, fintech lenders and insurers; and ISO 27001 consultancies that want to add a campaign and its evidence to their engagements."),
     "closing_h": ("Mulai dari satu kampanye.", "Start with one campaign."),
     "closing_cta": ("Ajukan Baseline", "Request a Baseline"),
+}
+
+# ---------------------------------------------------------------- 2b. Secure development
+PAGES["code"] = {
+    "meta_title": ("Gerbang Pengembangan Aman | obscur4", "Secure Development Gate | obscur4"),
+    "hero_h": ("Satu ==keputusan== untuk setiap pull request, dengan bukti yang dapat dipertahankan.",
+               "One ==verdict== per pull request, with evidence security can defend."),
+    "hero_sub": ("Kami menjalankan pemeriksaan kode, rahasia, dan dependensi di pipeline Anda, menahan hanya masalah baru, dan menyimpan catatan yang diminta auditor.",
+                 "We run code, secret and dependency checks in your pipeline, block only new problems, and keep the record your auditors ask for."),
+    "cta1": ("Ajukan Baseline", "Request a Baseline"),
+    "cta2": ("Lihat cara kerja kami", "See how we work"),
+    "problem_h": ("Tiga pemindai, tiga laporan, tanpa satu jawaban",
+                  "Three scanners, three reports, and no single answer"),
+    "problem_b": ("Banyak tim sudah menjalankan sebagian pemeriksaan. Yang belum ada adalah satu keputusan per perubahan yang dipercaya developer dan dapat dipertahankan tim keamanan. Temuan lama membuat gerbang baru gagal sejak hari pertama, lalu gerbang itu dimatikan.",
+                  "Most teams already run some checks. What they lack is one decision per change that developers trust and security can defend. Old findings make a new gate fail on day one, so the gate gets switched off."),
+    "what_h": ("Yang diperiksa gerbang", "What the gate checks"),
+    "what": [
+        (("Kode", "Code"),
+         ("Pola tidak aman dalam kode sumber Anda, termasuk kode mobile yang ditulis dengan Dart dan Flutter.",
+          "Insecure patterns in your source, including mobile code written in Dart and Flutter.")),
+        (("Rahasia", "Secrets"),
+         ("Kunci, token, dan kata sandi yang ikut ter-commit ke repositori. Nilai rahasia disamarkan di setiap laporan.",
+          "Keys, tokens and passwords committed to the repository. Secret values are redacted from every report.")),
+        (("Dependensi", "Dependencies"),
+         ("Kerentanan yang diketahui pada pustaka yang dikirim bersama aplikasi Anda.",
+          "Known vulnerabilities in the libraries your applications ship with.")),
+    ],
+    "how_h": ("Cara layanan berjalan", "How it runs"),
+    "steps": [
+        (("Tetapkan ruang lingkup dan otorisasi", "Scope and authorize"),
+         ("Kami menyepakati repositori, pipeline, dan kebijakan, lalu mencatat otorisasi tertulis sebelum pemindaian pertama.",
+          "We agree repositories, pipeline and policy, and record written authorization before the first scan.")),
+        (("Catat baseline", "Record the baseline"),
+         ("Temuan yang sudah ada dicatat sebagai utang yang diketahui, sehingga gerbang bisa mulai tanpa sprint pembersihan.",
+          "Existing findings are recorded as known debt, so the gate can start without a cleanup sprint.")),
+        (("Mulai dalam mode laporan", "Start in report-only mode"),
+         ("Gerbang melaporkan setiap pull request lebih dulu. Penahanan rilis diaktifkan per aturan setelah hasilnya dipercaya.",
+          "The gate reports on every pull request first. Blocking is switched on rule by rule once the results are trusted.")),
+        (("Setel aturan", "Tune the rules"),
+         ("Aturan yang terlalu bising diturunkan atau dimatikan, berdasarkan keputusan peninjau Anda yang sebenarnya.",
+          "Noisy rules are demoted or removed, based on how your reviewers actually decide.")),
+        (("Laporkan", "Report"),
+         ("Setiap periode ditutup dengan laporan dari catatan pemeriksaan, dengan tanda tangan penanggung jawab.",
+          "Each period ends in a report built from the run records, with a named sign-off.")),
+    ],
+    "ways_h": ("Dua bentuk layanan", "Two ways to buy"),
+    "offers": [
+        (("Baseline", "Baseline"),
+         ("Pemindaian pertama atas repositori Anda, baseline temuan yang sudah ditriase, dan sebuah laporan. Ruang lingkup dan penawaran disusun per kebutuhan.",
+          "A first scan of your repositories, a triaged baseline of existing findings and a report. Scope and quote are set per engagement.")),
+        (("Program", "Programme"),
+         ("Berkelanjutan: gerbang di pipeline Anda, penyetelan aturan, triase berkala, dan laporan yang tersusun untuk tinjauan audit dan risiko. Ruang lingkup dan penawaran disusun per kebutuhan.",
+          "Ongoing: the gate in your pipeline, rule tuning, regular triage and reports structured for audit and risk review. Scope and quote are set per engagement.")),
+    ],
+    "get_h": ("Yang Anda terima", "What you get"),
+    "get": [
+        ("Satu keputusan per perubahan: lolos, ditahan, atau belum dapat disimpulkan, beserta alasannya.",
+         "One verdict per change: pass, block or inconclusive, with the reason."),
+        ("Pemeriksaan yang gagal atau tidak berjalan tidak pernah tampil sebagai lolos.",
+         "A check that fails or does not run never shows as a pass."),
+        ("Catatan setiap pemeriksaan, termasuk versi alat dan aturan, agar hasil dapat diaudit kemudian.",
+         "A record of every run, including tool and rule versions, so any result can be audited later."),
+        ("Temuan dalam format yang dibaca alat Anda, termasuk dasbor code scanning.",
+         "Findings in formats your tools read, including your code-scanning dashboard."),
+        ("Laporan untuk developer: setiap temuan dengan cuplikan kode, saran perbaikan, dan tautan ke baris yang tepat.",
+         "A developer report: each finding with its code excerpt, a fix advisory and a link to the exact line."),
+    ],
+    "who_h": ("Untuk siapa", "Who it is for"),
+    "who_b": ("Pimpinan teknik yang perlu merilis tanpa terhambat keamanan; kepala risiko TI di perusahaan yang diawasi OJK yang membutuhkan bukti pengembangan aman; dan tim yang menerima kode dari pengembang alih daya dan ingin memeriksanya sebelum go-live.",
+              "Engineering leads who need to ship without security becoming the blocker; IT-risk heads at OJK-supervised firms who need evidence of secure development; and teams that accept code from outsourced developers and want it checked before go-live."),
+    "trust_h": ("Kode Anda tetap di tempat Anda", "Your code stays with you"),
+    "trust_b": ("Gerbang berjalan di dalam pipeline Anda sendiri, tanpa server kami dan tanpa telemetri. Yang keluar dari lingkungan Anda hanya laporan yang Anda pilih untuk dibagikan.",
+                "The gate runs inside your own pipeline, with no server of ours and no telemetry. Only the reports you choose to share leave your environment."),
+    "closing_h": ("Mulai dari satu Baseline.", "Start with one Baseline."),
+    "closing_cta": ("Ajukan Baseline", "Request a Baseline"),
+}
+
+# Example run output (secure development page). File names stay as-is.
+CODE_BUNDLE = {
+    "label": ("Contoh keluaran satu pemeriksaan", "Example output of one run"),
+    "root": "run-output",
+    "items": [
+        ("summary.txt", ("keputusan dan alasannya", "the verdict and its reason")),
+        ("findings.json", ("semua temuan dalam satu skema", "every finding in one schema")),
+        ("findings.sarif", ("untuk dasbor code scanning Anda", "for your code-scanning dashboard")),
+        ("run-manifest.json", ("versi alat dan aturan, kode keluar", "tool and rule versions, exit codes")),
+        ("report.docx", ("laporan developer dengan cuplikan kode", "developer report with code excerpts")),
+    ],
 }
 
 # ---------------------------------------------------------------- 3. Mobile
@@ -285,8 +393,8 @@ PAGES["partners"] = {
     "hero_sub": ("Kami bekerja sama dengan konsultan ISO 27001, reseller TI, dan kantor audit, masing-masing dengan model yang berbeda.",
                  "We work with ISO 27001 consultancies, IT resellers and audit firms. Each has a different model."),
     "why_h": ("Mengapa bermitra", "Why partner"),
-    "why_b": ("Konsultan ISO 27001 sudah menyediakan pelatihan kesadaran. Baseline menambahkan kampanye phishing berlokal dan laporan bukti ke pekerjaan yang sudah Anda jalankan.",
-              "ISO 27001 consultancies already deliver awareness training. Baseline adds a localized phishing campaign and an evidence report to work you already do."),
+    "why_b": ("Konsultan ISO 27001 sudah menyediakan pelatihan kesadaran. Baseline menambahkan kampanye phishing berlokal dan laporan bukti ke pekerjaan yang sudah Anda jalankan. Untuk klien yang mengembangkan perangkat lunak, Baseline kode menambahkan bukti pengodean dan pengujian yang aman.",
+              "ISO 27001 consultancies already deliver awareness training. Baseline adds a localized phishing campaign and an evidence report to work you already do. For clients that build software, a code Baseline adds evidence of secure coding and testing."),
     "models_h": ("Model kemitraan", "Partner models"),
     "models": [
         (("Konsultan ISO 27001", "ISO 27001 consultancies"),
@@ -308,8 +416,8 @@ PAGES["about"] = {
     "meta_title": ("Tentang obscur4", "About obscur4"),
     "hero_h": ("Layanan keamanan untuk organisasi di Indonesia, dijalankan di ==satu platform==.",
                "Security services for Indonesian organizations, run on ==one platform==."),
-    "hero_sub": ("obscur4 menyediakan layanan kesadaran keamanan dan penilaian aplikasi mobile, dijalankan lewat satu platform agar setiap pekerjaan menghasilkan bukti yang seragam.",
-                 "obscur4 provides security awareness and mobile app assessment, delivered through one platform so that every engagement produces the same kind of evidence."),
+    "hero_sub": ("obscur4 menyediakan layanan kesadaran keamanan, pengembangan aman, dan penilaian aplikasi mobile, dijalankan lewat satu platform agar setiap pekerjaan menghasilkan bukti yang seragam.",
+                 "obscur4 provides security awareness, secure development and mobile app assessment, delivered through one platform so that every engagement produces the same kind of evidence."),
     "operate_h": ("Cara kami beroperasi", "How we operate"),
     "operate": [
         ("Permintaan, ruang lingkup, dan otorisasi dicatat di platform.", "Intake, scope and authorization are recorded in the platform."),
@@ -341,6 +449,7 @@ PAGES["contact"] = {
     "required_note": ("Kolom bertanda * wajib diisi.", "Fields marked * are required."),
     "topics": [
         ("awareness", ("Kesadaran & phishing", "Awareness & phishing")),
+        ("code", ("Pengembangan aman", "Secure development")),
         ("mobile", ("Penilaian aplikasi mobile", "Mobile assessment")),
         ("partner", ("Kemitraan", "Partnership")),
         ("briefing", ("Briefing teknis", "Technical briefing")),
@@ -433,7 +542,7 @@ PAGES["sent"] = {
 # ---------------------------------------------------------------- illustrations and microcopy
 # Example phishing-simulation message shown as an annotated artifact. The lure itself is always Indonesian.
 LURE = {
-    "label": ("Example simulation lure", "Example simulation lure"),
+    "label": ("Contoh umpan simulasi", "Example simulation lure"),
     "from_name": "Layanan Pengiriman",
     "from_addr": "notifikasi@kirim-paket.example",
     "subject": "Paket Anda tertahan di gudang",
@@ -441,55 +550,124 @@ LURE = {
     "button": "Konfirmasi alamat",
     "link": "lacak-paket.example/konfirmasi",
     "cues": [
-        ("Sender name does not match the domain", "Sender name does not match the domain"),
-        ("Time pressure", "Time pressure"),
-        ("Link points to a different domain", "Link points to a different domain"),
+        ("Nama pengirim tidak cocok dengan domainnya", "Sender name does not match the domain"),
+        ("Desakan waktu", "Time pressure"),
+        ("Tautan mengarah ke domain lain", "Link points to a different domain"),
     ],
-    "caption": ("Our simulations use messages common in Indonesian workplaces. Staff learn to spot the signs.",
+    "caption": ("Simulasi kami memakai jenis pesan yang lazim di tempat kerja Indonesia. Staf belajar mengenali tandanya.",
                 "Our simulations use messages common in Indonesian workplaces. Staff learn to spot the signs."),
     "to": "Kepada: staf@organisasi-anda.example",
 }
 
 # Schematic illustration of the controlled-comparison method (mobile page).
 COMPARE = {
-    "title": ("One variable, one cause", "One variable, one cause"),
-    "label": ("Method illustration, not a client result", "Method illustration, not a client result"),
-    "cols": [("Build", "Build"), ("Device state", "Device state"),
-             ("Protection layer", "Protection layer"), ("Outcome", "Outcome")],
+    "title": ("Satu variabel, satu penyebab", "One variable, one cause"),
+    "label": ("Ilustrasi metode, bukan hasil klien", "Method illustration, not a client result"),
+    "cols": [("Build", "Build"), ("Kondisi perangkat", "Device state"),
+             ("Lapisan proteksi", "Protection layer"), ("Hasil", "Outcome")],
     "rows": [
-        [("Reference build", "Reference build"), ("stock", "stock"), ("none", "none"), ("runs normally", "runs normally")],
-        [("Wrapped build", "Wrapped build"), ("stock", "stock"), ("on", "on"), ("exits at launch", "exits at launch")],
+        [("Build acuan", "Reference build"), ("stock", "stock"), ("tidak ada", "none"), ("berjalan normal", "runs normally")],
+        [("Build terproteksi", "Wrapped build"), ("stock", "stock"), ("aktif", "on"), ("keluar saat diluncurkan", "exits at launch")],
     ],
-    "verdict": ("Only the protection layer differs, so the cause is attributed to it, then proven with a minimal change.",
+    "verdict": ("Hanya lapisan proteksi yang berbeda, sehingga penyebabnya dialamatkan ke lapisan itu, lalu dibuktikan dengan perubahan minimal.",
                 "Only the protection layer differs, so the cause is attributed to it, then proven with a minimal change."),
 }
 
 # Example evidence-bundle file tree (mobile page). File names stay as-is.
 BUNDLE = {
-    "label": ("Example evidence bundle structure", "Example evidence bundle structure"),
+    "label": ("Contoh struktur paket bukti", "Example evidence bundle structure"),
+    "root": "evidence-bundle",
     "items": [
-        ("artifacts/", ("original builds, never modified", "original builds, never modified")),
-        ("hashes.txt", ("a hash for every artifact", "a hash for every artifact")),
-        ("logs/", ("launch logs per device state", "launch logs per device state")),
-        ("captures/", ("console output and screenshots", "console output and screenshots")),
-        ("comparison.md", ("controlled comparison tables", "controlled comparison tables")),
-        ("reproduce.sh", ("command sequence to reproduce", "command sequence to reproduce")),
-        ("report.pdf", ("sanitized report for vendor follow-up", "sanitized report for vendor follow-up")),
+        ("artifacts/", ("build asli, tidak pernah diubah", "original builds, never modified")),
+        ("hashes.txt", ("hash untuk setiap artefak", "a hash for every artifact")),
+        ("logs/", ("log peluncuran per kondisi perangkat", "launch logs per device state")),
+        ("captures/", ("keluaran konsol dan tangkapan layar", "console output and screenshots")),
+        ("comparison.md", ("tabel perbandingan terkontrol", "controlled comparison tables")),
+        ("reproduce.sh", ("urutan perintah untuk reproduksi", "command sequence to reproduce")),
+        ("report.pdf", ("laporan tersanitasi untuk tindak lanjut vendor", "sanitized report for vendor follow-up")),
     ],
 }
 
 # Microcopy for the animated How We Work layer stack.
 FLOW = {
-    "token": ("action", "action"),
-    "stamp": ("authorized", "authorized"),
-    "result": ("recorded as an artifact", "recorded as an artifact"),
+    "token": ("tindakan", "action"),
+    "stamp": ("diotorisasi", "authorized"),
+    "result": ("tercatat sebagai artefak", "recorded as an artifact"),
 }
 
 # Microcopy for the animated awareness programme path.
 PATH = {
-    "report": ("Report by group", "Report by group"),
+    "report": ("Laporan per kelompok", "Report by group"),
 }
 
 NOT_FOUND = {
     "title": ("Halaman tidak ditemukan.", "Page not found."),
 }
+
+# ---------------------------------------------------------------- interface strings used by build.py
+KICKERS = {
+    "home": ("obscur4", ("Kesadaran, pengembangan aman, mobile", "Awareness, secure development, mobile")),
+    "awareness": (("Layanan utama", "Lead service"), ("Program terkelola", "Managed programme")),
+    "code": (("Layanan engineering", "Engineering service"), ("Gerbang di pipeline Anda", "A gate in your pipeline")),
+    "mobile": (("Layanan spesialis", "Specialist service"), ("Penilaian berbasis bukti", "Evidence-grade assessment")),
+    "how": (("Cara kerja", "How we work"), ("Otorisasi, bukti, data", "Authorization, evidence, data")),
+    "platform": ("Platform", ("Gambaran infrastruktur", "Infrastructure overview")),
+    "partners": (("Mitra", "Partners"), ("Rujukan, penjualan ulang, pengiriman", "Referral, resale, delivery")),
+    "about": (("Tentang", "About"), ("Satu platform, tiga layanan", "One platform, three services")),
+    "contact": (("Kontak", "Contact"), ("Kami membalas lewat email", "We reply by email")),
+    "privacy": (("Pemberitahuan privasi", "Privacy notice"), ("Berlaku 8 Oktober 2026", "Effective 8 October 2026")),
+}
+
+UI = {
+    "lead_service": ("Layanan utama", "Lead service"),
+    "engineering_service": ("Layanan engineering", "Engineering service"),
+    "specialist_service": ("Layanan spesialis", "Specialist service"),
+    "see_platform": ("Lihat platform", "See the platform"),
+    "story_label": ("Cara kampanye berjalan", "How a campaign works"),
+    "story_h": ("Dari satu pesan sampai bukti yang dapat ditelusuri auditor",
+                "From one message to evidence your auditors can follow"),
+    "entry": ("Awal", "Entry"),
+    "annual": ("Tahunan", "Annual"),
+    "ongoing": ("Berkelanjutan", "Ongoing"),
+    "partner_labels": [("Rujukan, lalu pengiriman", "Referral, then delivery"), ("Jual ulang", "Resell"),
+                       ("Hanya rujukan", "Referral only")],
+    "next_label": ("Langkah berikutnya", "What happens next"),
+    "stages": [
+        (("Anda mengirim permintaan", "You send a request"),
+         ("Kami membalas ke alamat email yang Anda berikan, dalam bahasa yang Anda pilih.",
+          "We reply to the email address you give, in the language you choose.")),
+        (("Kami menyepakati ruang lingkup", "We agree scope"),
+         ("Bila cocok, kami menyepakati ruang lingkup dan mencatat otorisasi tertulis sebelum pekerjaan dimulai.",
+          "If there is a fit, we agree scope and record written authorization before any work starts.")),
+        (("Pekerjaan berjalan lewat platform", "Work runs through the platform"),
+         ("Semuanya, dari kampanye atau pengujian pertama sampai laporan, keluar dari platform.",
+          "Everything from the first campaign or test to the report comes out of the platform.")),
+    ],
+    "toc_label": ("Di halaman ini", "On this page"),
+    "toc_aria": ("Bagian", "Sections"),
+    "sent_label": ("Permintaan terkirim", "Request sent"),
+    "nf_label": ("Galat 404", "Error 404"),
+    "nf_body": ("Halaman ini mungkin sudah dipindahkan. Berikut tempat utama untuk melanjutkan.",
+                "The page may have moved. These are the main places to go from here."),
+    "nf_title": ("Halaman tidak ditemukan | obscur4", "Page not found | obscur4"),
+    "stamp": ("diotorisasi", "authorized"),
+}
+
+# Home scroll story (5 steps).
+STORY = [
+    (("Semua dimulai dari satu pesan.", "It starts with one message."),
+     ("Umpan disusun dari jenis pesan yang lazim di tempat kerja Indonesia: pengiriman paket, pemberitahuan bank, pajak, pesan dari atasan.",
+      "Lures are written from message types common in Indonesian workplaces: parcel deliveries, bank notices, tax, a note from a manager.")),
+    (("Tandanya ditandai.", "The signs are marked."),
+     ("Setiap umpan membawa tanda yang perlu dikenali staf: pengirim yang tidak cocok dengan domainnya, desakan waktu, tautan ke tempat lain.",
+      "Every lure carries the signs staff should learn to notice: a sender that does not match its domain, time pressure, a link to somewhere else.")),
+    (("Kampanye menjangkau setiap kelompok sasaran.", "The campaign reaches every target group."),
+     ("Kampanye ditetapkan ruang lingkupnya dan diotorisasi lebih dulu, lalu diluncurkan dari platform kami ke kelompok yang Anda pilih.",
+      "Campaigns are scoped and authorized first, then launched from our platform to the groups you choose.")),
+    (("Hasil kembali per kelompok.", "Results come back by group."),
+     ("Laporan menunjukkan respons setiap kelompok, dan pelatihan menyusul di tempat yang membutuhkan. Hasil per orang hanya untuk administrator yang Anda tunjuk.",
+      "Reports show how each group responded, and training follows where it is needed. Person-level results stay with administrators you designate.")),
+    (("Setiap langkah meninggalkan bukti.", "Every step leaves evidence."),
+     ("Setiap kampanye ditutup dengan laporan dari platform yang dapat ditelusuri tim audit dan risiko Anda.",
+      "Each campaign ends in a platform-generated report your audit and risk teams can follow.")),
+]
