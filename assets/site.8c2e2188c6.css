@@ -87,9 +87,14 @@ em.hl { font-style: normal; color: var(--blue); }
 .nav-ind { position: absolute; left: 0; bottom: 2px; height: 2px; background: var(--blue); border-radius: 2px; transform: translateX(var(--x, 0)); width: var(--w, 0); opacity: var(--o, 0); }
 .nav-ready .nav-ind { transition: transform 0.4s var(--ease), width 0.4s var(--ease), opacity 0.2s; }
 .site-header .header-cta { display: none; }
+.lang-switch { display: none; align-items: center; justify-content: center; min-height: 36px; min-width: 40px; padding: 0 0.7rem; border: 1px solid var(--line-2); border-radius: 999px;
+  font: 650 0.8rem/1 var(--sans); letter-spacing: 0.06em; color: var(--ink-2); text-decoration: none; transition: border-color 0.2s, color 0.2s; }
+.lang-switch:hover { color: var(--ink); border-color: var(--ink); }
+.msheet-panel .lang-switch-sheet { display: inline-flex; align-self: flex-start; min-height: 44px; padding: 0 1.1rem; font-size: 0.95rem; letter-spacing: 0; }
 @media (min-width: 1080px) {
   .nav { display: block; }
   .site-header .header-cta { display: inline-flex; }
+  .header-row > .lang-switch { display: inline-flex; }
   .msheet { display: none; }
 }
 .msheet { margin-left: auto; }
@@ -327,6 +332,10 @@ html:not(.m) .tl-dot { display: none; }
 /* service panels (home) */
 .services { display: grid; gap: 1rem; }
 @media (min-width: 900px) { .services { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); } }
+@media (min-width: 900px) { .services-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .services-3 .panel-lead { grid-column: 1 / -1; } }
+@media (min-width: 1180px) { .services-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } .services-3 .panel-lead { grid-column: auto; } }
+.nf-langs { display: grid; gap: 2.5rem; }
+.nf-langs > div + div { padding-top: 2.5rem; border-top: 1px solid var(--line); }
 .panel { display: flex; flex-direction: column; gap: 0.9rem; padding: clamp(1.5rem, 1rem + 1.5vw, 2.25rem); background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); color: var(--ink); text-decoration: none; transition: border-color 0.3s var(--ease); }
 .panel:hover { border-color: var(--blue); color: var(--ink); }
 .panel .ill svg { max-height: 190px; margin: 0 0 0.5rem; }
